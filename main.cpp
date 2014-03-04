@@ -40,7 +40,7 @@ bool readHeader(header *wavHeader, FILE *wavIn);
 
 bool writeHeader(header *wavHeader, FILE *wavOut);
 
-bool nextSample(short* sample, unsigned short numChannels, FILE *wavIn, unsigned short sampleSize);
+bool nextSample(short* sample, unsigned short numChannels, FILE *wavIn);
 
 bool saveSample(short* sample, unsigned short numChannels, FILE *wavOut);
 
@@ -58,6 +58,7 @@ int main(int argc, char** argv)
     // Output file to use - opened in writeHeader
     FILE *wavOut;
     
+    // <editor-fold desc="Check input and file setup" defaultstate="collapsed">
     // Command as called as:
     // 381-project <inputfilename> <outputfilename>
     // therefore argc should be 3
@@ -85,6 +86,7 @@ int main(int argc, char** argv)
         cout << "File cannot be opened, please enter a valid file name." << endl;
         return false;
     }
+    // </editor-fold>
     
     // If cannot read in, return 1 as program has failed
     if (!readHeader(&wavHeader, wavIn))
@@ -105,7 +107,7 @@ int main(int argc, char** argv)
     for (int i = 0; i < wavHeader.subchunk2Size/wavHeader.numChannels/(wavHeader.bitsPerSample/8); i++)
     {
         // Get the next sample (includes all the channels for this sample)
-        nextSample(sample, wavHeader.numChannels, wavIn, wavHeader.bitsPerSample/8);
+        nextSample(sample, wavHeader.numChannels, wavIn);
 
         // Add sinewave to the samples
 
@@ -145,15 +147,9 @@ bool writeHeader(header *wavHeader, FILE *wavOut)
     return true;
 }
 
-bool nextSample(short* sample, unsigned short numChannels, FILE *wavIn, unsigned short sampleSize)
+bool nextSample(short* sample, unsigned short numChannels, FILE *wavIn)
 {
-    // Supports an arbitrary number of channels, with each channel pulling in
-    // the sample size of bits and storing them in the next portion of the 
-    // sample array. These will either be 8 or 16 bits  
-    for (short i = 0; i < numChannels; i++)
-    {
-        fread(sample + i, sampleSize, 1, wavIn);
-    }
+    fread(sample, sizeof(*sample) * numChannels, 1, wavIn);
 }
 
 bool saveSample(short* sample, unsigned short numChannels, FILE *wavOut)
