@@ -98,14 +98,21 @@ int main(int argc, char** argv)
     // Setup header for the output file
     writeHeader(&wavHeader, wavOut);
     
-    // Get the next sample (includes all the channels for this sample)
-    nextSample(sample, wavHeader.numChannels, wavIn, wavHeader.bitsPerSample/8);
-    
-    // Add sinewave to the samples
-    
-    
-    // Save the samples to the output
-    saveSample(sample, wavHeader.numChannels, wavOut);
+    // Iterate through the number of samples
+    // The calculation for how many to take in is the size of the data (in bytes)
+    // divided by the number of channels, divided by the bits per sample divided by 8 
+    // to get bytes per sample. This gives the total number of samples
+    for (unsigned short i = 0; i < wavHeader.subchunk2Size/wavHeader.numChannels/wavHeader.bitsPerSample/8; i++)
+    {
+        // Get the next sample (includes all the channels for this sample)
+        nextSample(sample, wavHeader.numChannels, wavIn, wavHeader.bitsPerSample/8);
+
+        // Add sinewave to the samples
+
+
+        // Save the samples to the output
+        saveSample(sample, wavHeader.numChannels, wavOut);
+    }
     
     return 0;
 }
