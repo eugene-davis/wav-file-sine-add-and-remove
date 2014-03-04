@@ -77,7 +77,7 @@ int main(int argc, char** argv)
     sample = new unsigned short[wavHeader.numChannels];
     
     // Setup header for the output file
-    writeHeader(argv[1], &wavHeader, wavOut);
+    writeHeader(argv[2], &wavHeader, wavOut);
     
     // Get the next sample (includes all the channels for this sample)
     nextSample(sample, wavHeader.numChannels, wavIn);
@@ -122,7 +122,18 @@ bool readHeader(char* fileName, header *wavHeader, FILE *wavIn)
 
 bool writeHeader(char* fileName, header *wavHeader, FILE *wavOut)
 {
+    wavOut = fopen(fileName, "ab");
+    // Check to see if the file actually opened
+    if (wavOut == NULL) 
+    {
+        cout << "File cannot be opened, please enter a valid file name." << endl;
+        return false;
+    }
     
+    // Copy the header into the header struct
+    fwrite(wavHeader, sizeof(*wavHeader), 1, wavOut);
+ 
+    return true;
 }
 
 bool nextSample(unsigned short* sample, unsigned short numChannels, FILE *wavIn)
