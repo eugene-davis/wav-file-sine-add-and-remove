@@ -25,6 +25,8 @@
       <runprofile version="9">
         <runcommandpicklist>
           <runcommandpicklistitem>"${OUTPUT_PATH}"</runcommandpicklistitem>
+          <runcommandpicklistitem>"${OUTPUT_PATH}" Virus Alert.WAV Davis_E_output.WAV</runcommandpicklistitem>
+          <runcommandpicklistitem>"${OUTPUT_PATH}" "Virus Alert.WAV" Davis_E_output.WAV</runcommandpicklistitem>
           <runcommandpicklistitem>"${OUTPUT_PATH}" Davis_E_orig.WAV Davis_E_output.WAV</runcommandpicklistitem>
         </runcommandpicklist>
         <runcommand>"${OUTPUT_PATH}" Davis_E_orig.WAV Davis_E_output.WAV</runcommand>

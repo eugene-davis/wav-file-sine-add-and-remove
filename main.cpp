@@ -44,6 +44,10 @@ bool nextSample(void* sample, unsigned int size, FILE *wavIn);
 
 bool saveSample(void* sample, unsigned int size, FILE *wavOut);
 
+short maxAmplitude8Bit(void* sample);
+
+short maxAmplitude16Bit(void* sample);
+
 void addSignal8Bit(void* sample);
 
 void addSignal16Bit(void* sample);
@@ -58,6 +62,9 @@ int main(int argc, char** argv)
     // Create pointer for arrays, it is void so it can be either character or
     // short depending on the size of the sample
     void *sample;
+    
+    // Stores the maximum amplitude
+    short amplitude;
 
     // Input file to use - opened in readHeader
     FILE *wavIn;
@@ -66,6 +73,9 @@ int main(int argc, char** argv)
     
     // Function pointer to use for adding the signal
     void (*addSignal)(void*);
+    
+    // Function pointer to use for finding the max amplitude of a signal
+    short (*maxAmplitude)(void*);
     
     // <editor-fold desc="Check input and file setup" defaultstate="collapsed">
     // Command as called as:
@@ -109,12 +119,14 @@ int main(int argc, char** argv)
     {
         sample = new char[wavHeader.numChannels];
         addSignal = &addSignal8Bit;
+        maxAmplitude = &maxAmplitude8Bit;
     }
     // If 16 bit, use shorts
     else if (wavHeader.bitsPerSample == 16)
     {
         sample = new short[wavHeader.numChannels];
         addSignal = &addSignal16Bit;
+        maxAmplitude = &maxAmplitude16Bit;
     }
     // If neither 8 nor 16, invalid sample size, exit with error
     else
@@ -131,21 +143,39 @@ int main(int argc, char** argv)
     // to get bytes per sample. This gives the total number of samples
     // divided by the number of channels, divided by the bits per sample divided by 8 
     // to get bytes per sample. This gives the total number of samples
-    int numSamples = wavHeader.subchunk2Size/wavHeader.numChannels/(wavHeader.bitsPerSample/8);
+    int numSamples = wavHeader.subchunk2Size/(wavHeader.numChannels/(wavHeader.bitsPerSample/8));
     
-    //if ()
     // Iterate through the number of samples
-    for (int i = 0; i < numSamples; i++)
+   for (int i = 0; i < numSamples; i++)
     {
         // Get the next sample (includes all the channels for this sample)
         nextSample(sample, wavHeader.numChannels * (wavHeader.bitsPerSample/8), wavIn);
-
-        // Add sinewave to the samples
+        
+        // Get the maximum amplitude of the sound
+        short tempAmp = (*maxAmplitude)(sample);
+        if (tempAmp > amplitude)
+        {
+            amplitude = tempAmp;
+        }
+    }
+   
+    // Reset the file back to an offset of 44 (the start of the data)
+    fseek(wavIn, 44, SEEK_SET);
+    
+    // Add the sine wave
+    // Iterate through the number of samples
+   for (int i = 0; i < numSamples; i++)
+    {
+        // Get the next sample (includes all the channels for this sample)
+        nextSample(sample, wavHeader.numChannels * (wavHeader.bitsPerSample/8), wavIn);
+        
+        // Add signal
         (*addSignal)(sample);
+
         // Save the samples to the output
         saveSample(sample, wavHeader.numChannels * (wavHeader.bitsPerSample/8), wavOut);
     }
-   
+    
     return 0;
 }
 
@@ -187,6 +217,16 @@ bool saveSample(void* sample, unsigned int size, FILE *wavOut)
 {
     // TODO - Support 8 bit samples
     fwrite(sample, size, 1, wavOut);
+}
+
+short maxAmplitude8Bit(void* sample)
+{
+    
+}
+
+short maxAmplitude16Bit(void* sample)
+{
+    
 }
 
 void addSignal8Bit(void* sample)
