@@ -33,15 +33,16 @@ struct header
  * Reads in the header of the wav file
  * @param fileName Name of the file to be read in
  * @param wavHeader Header structure to return
+ * @param wavIn File handle
  * @return 
  */
-bool readHeader(char* fileName, header *wavHeader);
+bool readHeader(char* fileName, header *wavHeader, FILE *wavIn);
 
-bool writeHeader(char* fileName, header *wavHeader);
+bool writeHeader(char* fileName, header *wavHeader, FILE *wavOut);
 
-bool nextSample(unsigned short* sample, unsigned short numChannels);
+bool nextSample(unsigned short* sample, unsigned short numChannels, FILE *wavIn);
 
-bool saveSample(unsigned short* sample, unsigned short numChannels);
+bool saveSample(unsigned short* sample, unsigned short numChannels, FILE *wavOut);
 
 /*
  * 
@@ -52,6 +53,10 @@ int main(int argc, char** argv)
     header wavHeader;
     // Create the short array for the samples
     unsigned short *sample;
+    // Input file to use - opened in readHeader
+    FILE *wavIn;
+    // Output file to use - opened in writeHeader
+    FILE *wavOut;
     
     // Command as called as:
     // 381-project <inputfilename> <outputfilename>
@@ -63,7 +68,7 @@ int main(int argc, char** argv)
         return 1;
     }
     // If cannot read in, return 1 as program has failed
-    if (!readHeader(argv[1], &wavHeader))
+    if (!readHeader(argv[1], &wavHeader, wavIn))
     {
         return 1;
     }
@@ -72,16 +77,16 @@ int main(int argc, char** argv)
     sample = new unsigned short[wavHeader.numChannels];
     
     // Setup header for the output file
-    writeHeader(argv[1], &wavHeader);
+    writeHeader(argv[1], &wavHeader, wavOut);
     
     // Get the next sample (includes all the channels for this sample)
-    nextSample(sample, wavHeader.numChannels);
+    nextSample(sample, wavHeader.numChannels, wavIn);
     
     // Add sinewave to the samples
     
     
     // Save the samples to the output
-    saveSample(sample, wavHeader.numChannels);
+    saveSample(sample, wavHeader.numChannels, wavOut);
     
     return 0;
 }
@@ -92,9 +97,9 @@ int main(int argc, char** argv)
  * @param wavHeader Header structure to return
  * @return 
  */
-bool readHeader(char* fileName, header *wavHeader) {
-    FILE *wavIn = fopen(fileName, "rb");
-    
+bool readHeader(char* fileName, header *wavHeader, FILE *wavIn) 
+{  
+    wavIn = fopen(fileName, "rb");
     // Check to see if the file actually opened
     if (wavIn == NULL) 
     {
@@ -115,17 +120,17 @@ bool readHeader(char* fileName, header *wavHeader) {
     return true;
 }
 
-bool writeHeader(char* fileName, header *wavHeader)
+bool writeHeader(char* fileName, header *wavHeader, FILE *wavOut)
 {
     
 }
 
-bool nextSample(unsigned short* sample, unsigned short numChannels)
+bool nextSample(unsigned short* sample, unsigned short numChannels, FILE *wavIn)
 {
     
 }
 
-bool saveSample(unsigned short* sample, unsigned short numChannels)
+bool saveSample(unsigned short* sample, unsigned short numChannels, FILE *wavOut)
 {
     
 }
