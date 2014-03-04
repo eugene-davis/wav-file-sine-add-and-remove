@@ -40,9 +40,13 @@ bool readHeader(header *wavHeader, FILE *wavIn);
 
 bool writeHeader(header *wavHeader, FILE *wavOut);
 
-bool nextSample(short* sample, unsigned short numChannels, FILE *wavIn);
+bool nextSample(void* sample, unsigned int size, FILE *wavIn);
 
-bool saveSample(short* sample, unsigned short numChannels, FILE *wavOut);
+bool saveSample(void* sample, unsigned int size, FILE *wavOut);
+
+void addSignal8Bit(void* sample);
+
+void addSignal16Bit(void* sample);
 
 /*
  * 
@@ -51,12 +55,17 @@ int main(int argc, char** argv)
 {
     // Create struct for header
     header wavHeader;
-    // Create the short array for the samples
-    short *sample;
+    // Create pointer for arrays, it is void so it can be either character or
+    // short depending on the size of the sample
+    void *sample;
+
     // Input file to use - opened in readHeader
     FILE *wavIn;
     // Output file to use - opened in writeHeader
     FILE *wavOut;
+    
+    // Function pointer to use for adding the signal
+    void (*addSignal)(void*);
     
     // <editor-fold desc="Check input and file setup" defaultstate="collapsed">
     // Command as called as:
@@ -95,24 +104,46 @@ int main(int argc, char** argv)
     }
     
     // Now that we have the number of channels, make the array for sample
-    sample = new short[wavHeader.numChannels];
+    // If 8 bit, use the character sample, if 16 bit use the short sample
+    if (wavHeader.bitsPerSample == 8)
+    {
+        sample = new char[wavHeader.numChannels];
+        addSignal = &addSignal8Bit;
+    }
+    // If 16 bit, use shorts
+    else if (wavHeader.bitsPerSample == 16)
+    {
+        sample = new short[wavHeader.numChannels];
+        addSignal = &addSignal16Bit;
+    }
+    // If neither 8 nor 16, invalid sample size, exit with error
+    else
+    {
+        cerr << "Invalid sample size." << endl;
+        return 1;
+    }
     
     // Setup header for the output file
     writeHeader(&wavHeader, wavOut);
     
-    // Iterate through the number of samples
-    // The calculation for how many to take in is the size of the data (in bytes)
+    // The calculation for how many samples to take in is the size of the data (in bytes)
     // divided by the number of channels, divided by the bits per sample divided by 8 
     // to get bytes per sample. This gives the total number of samples
-    for (int i = 0; i < wavHeader.subchunk2Size/wavHeader.numChannels/(wavHeader.bitsPerSample/8); i++)
+    // divided by the number of channels, divided by the bits per sample divided by 8 
+    // to get bytes per sample. This gives the total number of samples
+    int numSamples = wavHeader.subchunk2Size/wavHeader.numChannels/(wavHeader.bitsPerSample/8);
+    
+    //if ()
+    // Iterate through the number of samples
+    for (int i = 0; i < numSamples; i++)
     {
         // Get the next sample (includes all the channels for this sample)
-        nextSample(sample, wavHeader.numChannels, wavIn);
+        nextSample(sample, wavHeader.numChannels * (wavHeader.bitsPerSample/8), wavIn);
 
         // Add sinewave to the samples
-
+        (*addSignal)(sample);
         // Save the samples to the output
-        saveSample(sample, wavHeader.numChannels, wavOut);
+        saveSample(sample, wavHeader.numChannels * (wavHeader.bitsPerSample/8), wavOut);
     }
    
     return 0;
@@ -132,7 +163,7 @@ bool readHeader(header *wavHeader, FILE *wavIn)
     // Check that the structure now has data
     if (wavHeader == NULL)
     {
-        cout << "File appears to be empty, please use a valid file." << endl;
+        cerr << "File appears to be empty, please use a valid file." << endl;
         return false;
     }
     
@@ -147,13 +178,23 @@ bool writeHeader(header *wavHeader, FILE *wavOut)
     return true;
 }
 
-bool nextSample(short* sample, unsigned short numChannels, FILE *wavIn)
+bool nextSample(void* sample, unsigned int size, FILE *wavIn)
 {
-    fread(sample, sizeof(*sample) * numChannels, 1, wavIn);
+    fread(sample, size, 1, wavIn);
 }
 
-bool saveSample(short* sample, unsigned short numChannels, FILE *wavOut)
+bool saveSample(void* sample, unsigned int size, FILE *wavOut)
 {
     // TODO - Support 8 bit samples
-    fwrite(sample, sizeof(*sample) * numChannels, 1, wavOut);
+    fwrite(sample, size, 1, wavOut);
+}
+
+void addSignal8Bit(void* sample)
+{
+    
+}
+
+void addSignal16Bit(void* sample)
+{
+    
 }
