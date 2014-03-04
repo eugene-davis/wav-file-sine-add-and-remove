@@ -36,13 +36,13 @@ struct header
  * @param wavIn File handle
  * @return 
  */
-bool readHeader(char* fileName, header *wavHeader, FILE *wavIn);
+bool readHeader(header *wavHeader, FILE *wavIn);
 
-bool writeHeader(char* fileName, header *wavHeader, FILE *wavOut);
+bool writeHeader(header *wavHeader, FILE *wavOut);
 
-bool nextSample(unsigned short* sample, unsigned short numChannels, FILE *wavIn);
+bool nextSample(short* sample, unsigned short numChannels, FILE *wavIn, unsigned short sampleSize);
 
-bool saveSample(unsigned short* sample, unsigned short numChannels, FILE *wavOut);
+bool saveSample(short* sample, unsigned short numChannels, FILE *wavOut);
 
 /*
  * 
@@ -52,7 +52,7 @@ int main(int argc, char** argv)
     // Create struct for header
     header wavHeader;
     // Create the short array for the samples
-    unsigned short *sample;
+    short *sample;
     // Input file to use - opened in readHeader
     FILE *wavIn;
     // Output file to use - opened in writeHeader
@@ -67,20 +67,39 @@ int main(int argc, char** argv)
                 << "381-project <input filename> <output filename>" << endl;
         return 1;
     }
+    
+    // Open input file
+    wavIn = fopen(argv[1], "rb");
+    // Check to see if the file actually opened
+    if (wavIn == NULL) 
+    {
+        cout << "File cannot be opened, please enter a valid file name." << endl;
+        return 1;
+    }
+    
+    // Open output file
+    wavOut = fopen(argv[2], "ab");
+    // Check to see if the file actually opened
+    if (wavOut == NULL) 
+    {
+        cout << "File cannot be opened, please enter a valid file name." << endl;
+        return false;
+    }
+    
     // If cannot read in, return 1 as program has failed
-    if (!readHeader(argv[1], &wavHeader, wavIn))
+    if (!readHeader(&wavHeader, wavIn))
     {
         return 1;
     }
     
     // Now that we have the number of channels, make the array for sample
-    sample = new unsigned short[wavHeader.numChannels];
+    sample = new short[wavHeader.numChannels];
     
     // Setup header for the output file
-    writeHeader(argv[2], &wavHeader, wavOut);
+    writeHeader(&wavHeader, wavOut);
     
     // Get the next sample (includes all the channels for this sample)
-    nextSample(sample, wavHeader.numChannels, wavIn);
+    nextSample(sample, wavHeader.numChannels, wavIn, wavHeader.bitsPerSample/8);
     
     // Add sinewave to the samples
     
@@ -97,16 +116,8 @@ int main(int argc, char** argv)
  * @param wavHeader Header structure to return
  * @return 
  */
-bool readHeader(char* fileName, header *wavHeader, FILE *wavIn) 
-{  
-    wavIn = fopen(fileName, "rb");
-    // Check to see if the file actually opened
-    if (wavIn == NULL) 
-    {
-        cout << "File cannot be opened, please enter a valid file name." << endl;
-        return false;
-    }
-    
+bool readHeader(header *wavHeader, FILE *wavIn) 
+{   
     // Copy the header into the header struct
     fread(wavHeader, sizeof(*wavHeader), 1, wavIn);
     
@@ -120,28 +131,26 @@ bool readHeader(char* fileName, header *wavHeader, FILE *wavIn)
     return true;
 }
 
-bool writeHeader(char* fileName, header *wavHeader, FILE *wavOut)
-{
-    wavOut = fopen(fileName, "ab");
-    // Check to see if the file actually opened
-    if (wavOut == NULL) 
-    {
-        cout << "File cannot be opened, please enter a valid file name." << endl;
-        return false;
-    }
-    
+bool writeHeader(header *wavHeader, FILE *wavOut)
+{    
     // Copy the header into the header struct
     fwrite(wavHeader, sizeof(*wavHeader), 1, wavOut);
  
     return true;
 }
 
-bool nextSample(unsigned short* sample, unsigned short numChannels, FILE *wavIn)
+bool nextSample(short* sample, unsigned short numChannels, FILE *wavIn, unsigned short sampleSize)
 {
-    
+    // Supports an arbitrary number of channels, with each channel pulling in
+    // the sample size of bits and storing them in the next portion of the 
+    // sample array. These will either be 8 or 16 bits  
+    for (short i = 0; i < numChannels; i++)
+    {
+        fread(sample + i, sampleSize, 1, wavIn);
+    }
 }
 
-bool saveSample(unsigned short* sample, unsigned short numChannels, FILE *wavOut)
+bool saveSample(short* sample, unsigned short numChannels, FILE *wavOut)
 {
     
 }
