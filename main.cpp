@@ -14,19 +14,19 @@ using namespace std;
 struct header
 {
     char chunkID[4];
-    int chunkSize;
+    unsigned int chunkSize;
     char format[4];
     char subchunk1ID[4];
-    int subchunk1Size;
-    short audioFormat;
-    short numChannels;
-    int sampleRate;
-    int byteRate;
-    short blockAlign;
-    short bitsPerSample;
+    unsigned int subchunk1Size;
+    unsigned short audioFormat;
+    unsigned short numChannels;
+    unsigned int sampleRate;
+    unsigned int byteRate;
+    unsigned short blockAlign;
+    unsigned short bitsPerSample;
     // Heads up the data sub chunk
     char subchunk2ID[4];
-    int subchunk2Size;
+    unsigned int subchunk2Size;
 };
 
 /**
@@ -37,14 +37,21 @@ struct header
  */
 bool readHeader(char* fileName, header *wavHeader);
 
+bool writeHeader(char* fileName, header *wavHeader);
+
+bool nextSample(unsigned short* sample, unsigned short numChannels);
+
+bool saveSample(unsigned short* sample, unsigned short numChannels);
+
 /*
  * 
  */
-int
-main(int argc, char** argv)
+int main(int argc, char** argv)
 {
     // Create struct for header
     header wavHeader;
+    // Create the short array for the samples
+    unsigned short *sample;
     
     // Command as called as:
     // 381-project <inputfilename> <outputfilename>
@@ -60,6 +67,22 @@ main(int argc, char** argv)
     {
         return 1;
     }
+    
+    // Now that we have the number of channels, make the array for sample
+    sample = new unsigned short[wavHeader.numChannels];
+    
+    // Setup header for the output file
+    writeHeader(argv[1], &wavHeader);
+    
+    // Get the next sample (includes all the channels for this sample)
+    nextSample(sample, wavHeader.numChannels);
+    
+    // Add sinewave to the samples
+    
+    
+    // Save the samples to the output
+    saveSample(sample, wavHeader.numChannels);
+    
     return 0;
 }
 
@@ -90,4 +113,19 @@ bool readHeader(char* fileName, header *wavHeader) {
     }
     
     return true;
+}
+
+bool writeHeader(char* fileName, header *wavHeader)
+{
+    
+}
+
+bool nextSample(unsigned short* sample, unsigned short numChannels)
+{
+    
+}
+
+bool saveSample(unsigned short* sample, unsigned short numChannels)
+{
+    
 }
