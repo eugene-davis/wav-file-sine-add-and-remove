@@ -78,7 +78,7 @@ int main(int argc, char** argv)
     }
     
     // Open output file
-    wavOut = fopen(argv[2], "ab");
+    wavOut = fopen(argv[2], "wb");
     // Check to see if the file actually opened
     if (wavOut == NULL) 
     {
@@ -102,18 +102,17 @@ int main(int argc, char** argv)
     // The calculation for how many to take in is the size of the data (in bytes)
     // divided by the number of channels, divided by the bits per sample divided by 8 
     // to get bytes per sample. This gives the total number of samples
-    for (unsigned short i = 0; i < wavHeader.subchunk2Size/wavHeader.numChannels/wavHeader.bitsPerSample/8; i++)
+    for (int i = 0; i < wavHeader.subchunk2Size/wavHeader.numChannels/(wavHeader.bitsPerSample/8); i++)
     {
         // Get the next sample (includes all the channels for this sample)
         nextSample(sample, wavHeader.numChannels, wavIn, wavHeader.bitsPerSample/8);
 
         // Add sinewave to the samples
 
-
         // Save the samples to the output
         saveSample(sample, wavHeader.numChannels, wavOut);
     }
-    
+   
     return 0;
 }
 
@@ -159,5 +158,6 @@ bool nextSample(short* sample, unsigned short numChannels, FILE *wavIn, unsigned
 
 bool saveSample(short* sample, unsigned short numChannels, FILE *wavOut)
 {
-    
+    // TODO - Support 8 bit samples
+    fwrite(sample, sizeof(*sample) * numChannels, 1, wavOut);
 }
