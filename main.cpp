@@ -6,7 +6,9 @@
  */
 
 #include <iostream>
-#include <stdio.h>
+#include <stdio.h> // File writing
+#include <math.h>  // Contains sin
+#include <stdlib.h> // Contains abs
 
 using namespace std;
 
@@ -48,9 +50,9 @@ short maxChanAmp8Bit(void* sample, unsigned short numChannels);
 
 short maxChanAmp16Bit(void* sample, unsigned short numChannels);
 
-void addSignal8Bit(void* sample);
+void addSignal8Bit(void* sample, unsigned short numChannels, unsigned short amplitude);
 
-void addSignal16Bit(void* sample);
+void addSignal16Bit(void* sample, unsigned short numChannels, unsigned short amplitude);
 
 /*
  * 
@@ -72,7 +74,7 @@ int main(int argc, char** argv)
     FILE *wavOut;
     
     // Function pointer to use for adding the signal
-    void (*addSignal)(void*);
+    void (*addSignal)(void*, unsigned short, unsigned short);
     
     // Function pointer to use for finding the max amplitude of a signal
     short (*maxChannelAmp)(void*, unsigned short);
@@ -143,7 +145,11 @@ int main(int argc, char** argv)
     // to get bytes per sample. This gives the total number of samples
     // divided by the number of channels, divided by the bits per sample divided by 8 
     // to get bytes per sample. This gives the total number of samples
-    int numSamples = wavHeader.subchunk2Size/(wavHeader.numChannels/(wavHeader.bitsPerSample/8));
+    int numSamples = wavHeader.subchunk2Size/ (wavHeader.numChannels * (wavHeader.bitsPerSample / 8));
+    cout << wavHeader.subchunk2Size << endl
+            << wavHeader.numChannels << endl
+            << wavHeader.bitsPerSample << endl
+            << numSamples << endl;
     
     // Iterate through the number of samples
    for (int i = 0; i < numSamples; i++)
@@ -170,7 +176,7 @@ int main(int argc, char** argv)
         nextSample(sample, wavHeader.numChannels * (wavHeader.bitsPerSample/8), wavIn);
         
         // Add signal
-        (*addSignal)(sample);
+        //(*addSignal)(sample, wavHeader.numChannels, amplitude);
 
         // Save the samples to the output
         saveSample(sample, wavHeader.numChannels * (wavHeader.bitsPerSample/8), wavOut);
@@ -244,18 +250,27 @@ short maxChanAmp16Bit(void* sample, unsigned short numChannels)
     {
         if (tempAmp < sSamp[i])
         {
-            tempAmp = sSamp[i];
+            tempAmp = abs(sSamp[i]);
         }
     }
     return tempAmp;
 }
 
-void addSignal8Bit(void* sample)
+void addSignal8Bit(void* sample, unsigned short numChannels, unsigned short amplitude)
 {
     
 }
 
-void addSignal16Bit(void* sample)
+void addSignal16Bit(void* sample, unsigned short numChannels, unsigned short amplitude)
 {
+    // Cast the sample input into a unsigned short array (16 bit not 8)
+    short* sSamp = static_cast<short*>(sample);
     
+    // Temp just add half of amplitude to see if it works
+    for (short i = 0; i < numChannels; i++)
+    {
+        sSamp[i] = sSamp[i] + amplitude / 2;
+    }
+    
+    sample = sSamp;
 }
