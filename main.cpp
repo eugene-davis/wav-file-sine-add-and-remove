@@ -24,9 +24,22 @@
  */
 
 #include <iostream>
+#include <fstream> // Used to rapidly create summary file
+#include <iomanip> // Allows for setting precision on output
+#include <sys/time.h> // Alternate timing function
 
 #include "wave_io.h"
 #include "phase1_sig_proc.h"
+
+/*
+ *  copied from mpbench - from CPE 412 originally, works better than time
+ *  which claimed 0 seconds had elapsed
+ */
+#define TIMER_CLEAR     (tv1.tv_sec = tv1.tv_usec = tv2.tv_sec = tv2.tv_usec = 0)
+#define TIMER_START     gettimeofday(&tv1, (struct timezone*)0)
+#define TIMER_ELAPSED   ((tv2.tv_usec-tv1.tv_usec)+((tv2.tv_sec-tv1.tv_sec)*1000000))
+#define TIMER_STOP      gettimeofday(&tv2, (struct timezone*)0)
+struct timeval tv1,tv2;
 
 using namespace std;
 
@@ -36,6 +49,11 @@ using namespace std;
  */
 int main(int argc, char** argv)
 {
+
+   // Start tracking execution time
+   TIMER_CLEAR;
+   TIMER_START;
+    
     // Create new struct for header
     header wavHeader;
    /*
@@ -175,6 +193,23 @@ int main(int argc, char** argv)
             return 1;
         }
     }
+    
+    // Now that actual processing is complete but before writing the summary file, stop timer
+    TIMER_STOP;
+    
+    // Write to summary text file
+    ofstream summaryFile;
+    summaryFile.open("Summary.txt");
+    
+    summaryFile << "Input File Name: " << argv[1] << endl;
+    summaryFile << "Output File Name: " << argv[2] << endl;
+    summaryFile << "Sampling Frequency (samp/s): " << wavHeader.sampleRate << endl;
+    summaryFile << "Recording Length (s): " 
+            /*(Dimensional Analysis): (bytes / (bytes/samp)) / samp/s = samp * s/samp = s*/
+            << (wavHeader.subchunk2Size / (wavHeader.numChannels * (wavHeader.bitsPerSample/8))) / wavHeader.sampleRate
+            << endl;
+    summaryFile.precision(5);
+    summaryFile << "Processing Time (s): " << setprecision(8) <<  TIMER_ELAPSED/1000000.0 << endl;
     
     return 0;
 }
