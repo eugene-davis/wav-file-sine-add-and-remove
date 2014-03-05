@@ -1,3 +1,7 @@
+# Author: Eugene Davis
+# Class: CPE 381
+# This make file compiles and links Phase 1 of CPE Project 1
+
 #Linking
 build: wave_io.o main.o phase1_sig_proc.o
 	g++ main.o wave_io.o phase1_sig_proc.o -o 381-project-phase-1

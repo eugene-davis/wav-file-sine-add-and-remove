@@ -1,6 +1,24 @@
 /* 
+ * This function drives the functions to read in a wave file, add a sinewave to
+ * it and then write it all out to a drive.
+ * 
+ * Although it requires reading everything from the file twice, this program
+ * simulates a real time signal by not storing samples in memory other than
+ * the currently being processed sample.
+ * 
+ * void pointers were used for the data type of the array storing samples so as
+ * to reduce the amount of conditionals required to handle the difference between
+ * 8 and 16 bit samples. This allows this top level code to be more abstract and
+ * maintainable/extensible for the different sample sizes.
+ * 
+ * function pointers were used for the 8 and 16 byte specific functions, again
+ * to allow this top level code to be more abstract, and thus make it more easily
+ * maintainable/extensible.
+ * 
  * File:   main.cpp
- * Author: eugene
+ * Author: Eugene Davis
+ * Class: CPE 381
+ * Project Phase 1
  *
  * Created on March 4, 2014, 1:44 AM
  */
@@ -10,27 +28,28 @@
 #include "wave_io.h"
 #include "phase1_sig_proc.h"
 
-#define PI 3.14159265 // Define a value of PI as a macro rather than access memory when used
-
 using namespace std;
 
 /*
- * 
+ * Main function drives the functions required to read/write a WAV file, and
+ * to add a sine wave signal to the WAV file's audio.
  */
 int main(int argc, char** argv)
 {
-    // Create struct for header
+    // Create new struct for header
     header wavHeader;
-    // Create pointer for arrays, it is void so it can be either character or
-    // short depending on the size of the sample
+   /*
+    * Create pointer for arrays, it is void so it can be either character or
+    * short depending on the size of the samples
+    */
     void *sample;
     
     // Stores the maximum amplitude
     short amplitude;
 
-    // Input file to use - opened in readHeader
+    // Input file handle to use - opened in readHeader
     FILE *wavIn;
-    // Output file to use - opened in writeHeader
+    // Output file handle to use - opened in writeHeader
     FILE *wavOut;
     
     // Function pointer to use for adding the signal
@@ -69,15 +88,17 @@ int main(int argc, char** argv)
     }
     // </editor-fold>
     
-    // If cannot read in, return 1 as program has failed
+    // If cannot read in header, return 1 as program has failed
     if (!readHeader(&wavHeader, wavIn))
     {
         return 1;
     }
     
     // <editor-fold desc="Setup pointers" defaultstate="collapsed">
-    // Now that we have the number of channels, make the array for sample
-    // If 8 bit, use the character sample, if 16 bit use the short sample
+    /*
+     *  Now that we have the number of channels, make the array for samples
+     * and setup function pointers
+     */
     if (wavHeader.bitsPerSample == 8)
     {
         sample = new char[wavHeader.numChannels];
@@ -99,28 +120,40 @@ int main(int argc, char** argv)
     }
     // </editor-fold>
     
-    // Setup header for the output file
-    writeHeader(&wavHeader, wavOut);
-    
-    // The calculation for how many samples to take in is the size of the data (in bytes)
-    // divided by the number of channels times the bytes per sample
+    // Setup header in the output file
+    if (!writeHeader(&wavHeader, wavOut))
+    {
+        return 1;
+    }
+   /*
+    * The calculation for how many samples to take in is the size of the data (in bytes)
+    * divided by the number of channels times the bytes per sample
+    */
     int numSamples = wavHeader.subchunk2Size/ (wavHeader.numChannels * (wavHeader.bitsPerSample / 8));
     
-    // Iterate through the number of samples
+    // Iterate through the samples to find the maximum amplitude
    for (int i = 0; i < numSamples; i++)
     {
         // Get the next sample (includes all the channels for this sample)
-        nextSample(sample, wavHeader.numChannels * (wavHeader.bitsPerSample/8), wavIn);
+        if (!nextSample(sample, wavHeader.numChannels * (wavHeader.bitsPerSample/8), wavIn))
+        {
+            return 1;
+        }
         
-        // Get the maximum amplitude of the sound
+        // Get the maximum amplitude of this sample
         short tempAmp = (*maxChannelAmp)(sample, wavHeader.numChannels);
+        // Check if the maximum amplitude of this sample was the new biggest
         if (tempAmp > amplitude)
         {
             amplitude = tempAmp;
         }
    }
     
-    // Reset the file back to an offset of 44 (the start of the data)
+   /* 
+    * Reset the file back to an offset of 44 (the start of the data)
+    * This is done rather than storing the samples in order to treat it more
+    * like real time
+    */
     fseek(wavIn, 44, SEEK_SET);
     
     // Add the sine wave
@@ -128,13 +161,19 @@ int main(int argc, char** argv)
    for (unsigned int i = 0; i < numSamples; i++)
     {
         // Get the next sample (includes all the channels for this sample)
-        nextSample(sample, wavHeader.numChannels * (wavHeader.bitsPerSample/8), wavIn);
+        if (!nextSample(sample, wavHeader.numChannels * (wavHeader.bitsPerSample/8), wavIn))
+        {
+            return 1;
+        }
         
-        // Add signal
+        // Add signal - i.e. the sinewave
         (*addSignal)(sample, wavHeader.numChannels, amplitude, i, wavHeader.sampleRate);
 
-        // Save the samples to the output
-        saveSample(sample, wavHeader.numChannels * (wavHeader.bitsPerSample/8), wavOut);
+        // Save the samples to the output file
+        if (!saveSample(sample, wavHeader.numChannels * (wavHeader.bitsPerSample/8), wavOut))
+        {
+            return 1;
+        }
     }
     
     return 0;
