@@ -6,48 +6,15 @@
  */
 
 #include <iostream>
-#include <stdio.h> // File writing
 #include <math.h>  // Contains sin
 #include <stdlib.h> // Contains abs
 #include <climits> // Contains constants used to check for overflow
 
+#include "wave_io.h"
+
 #define PI 3.14159265 // Define a value of PI as a macro rather than access memory when used
 
 using namespace std;
-
-// Names are as they are found at https://ccrma.stanford.edu/courses/422/projects/WaveFormat/
-struct header
-{
-    char chunkID[4];
-    unsigned int chunkSize;
-    char format[4];
-    char subchunk1ID[4];
-    unsigned int subchunk1Size;
-    unsigned short audioFormat;
-    unsigned short numChannels;
-    unsigned int sampleRate;
-    unsigned int byteRate;
-    unsigned short blockAlign;
-    unsigned short bitsPerSample;
-    // Heads up the data sub chunk
-    char subchunk2ID[4];
-    unsigned int subchunk2Size;
-};
-
-/**
- * Reads in the header of the wav file
- * @param fileName Name of the file to be read in
- * @param wavHeader Header structure to return
- * @param wavIn File handle
- * @return 
- */
-bool readHeader(header *wavHeader, FILE *wavIn);
-
-bool writeHeader(header *wavHeader, FILE *wavOut);
-
-bool nextSample(void* sample, unsigned int size, FILE *wavIn);
-
-bool saveSample(void* sample, unsigned int size, FILE *wavOut);
 
 short maxChanAmp8Bit(void* sample, unsigned short numChannels);
 
@@ -148,10 +115,6 @@ int main(int argc, char** argv)
     // The calculation for how many samples to take in is the size of the data (in bytes)
     // divided by the number of channels times the bytes per sample
     int numSamples = wavHeader.subchunk2Size/ (wavHeader.numChannels * (wavHeader.bitsPerSample / 8));
-    cout << wavHeader.subchunk2Size << endl
-            << wavHeader.numChannels << endl
-            << wavHeader.bitsPerSample << endl
-            << numSamples << endl;
     
     // Iterate through the number of samples
    for (int i = 0; i < numSamples; i++)
@@ -185,45 +148,6 @@ int main(int argc, char** argv)
     }
     
     return 0;
-}
-
-/**
- * Reads in the header of the wav file
- * @param fileName Name of the file to be read in
- * @param wavHeader Header structure to return
- * @return 
- */
-bool readHeader(header *wavHeader, FILE *wavIn) 
-{   
-    // Copy the header into the header struct
-    fread(wavHeader, sizeof(*wavHeader), 1, wavIn);
-    
-    // Check that the structure now has data
-    if (wavHeader == NULL)
-    {
-        cerr << "File appears to be empty, please use a valid file." << endl;
-        return false;
-    }
-    
-    return true;
-}
-
-bool writeHeader(header *wavHeader, FILE *wavOut)
-{    
-    // Copy the header into the header struct
-    fwrite(wavHeader, sizeof(*wavHeader), 1, wavOut);
- 
-    return true;
-}
-
-bool nextSample(void* sample, unsigned int size, FILE *wavIn)
-{
-    fread(sample, size, 1, wavIn);
-}
-
-bool saveSample(void* sample, unsigned int size, FILE *wavOut)
-{
-    fwrite(sample, size, 1, wavOut);
 }
 
 short maxChanAmp8Bit(void* sample, unsigned short numChannels)
