@@ -15,6 +15,9 @@
  * to allow this top level code to be more abstract, and thus make it more easily
  * maintainable/extensible.
  * 
+ * Run with:
+ * 381-project <inputfilename> <outputfilename>
+ * 
  * File:   main.cpp
  * Author: Eugene Davis
  * Class: CPE 381
@@ -26,7 +29,7 @@
 #include <iostream>
 #include <fstream> // Used to rapidly create summary file
 #include <iomanip> // Allows for setting precision on output
-#include <sys/time.h> // Alternate timing function
+#include <sys/time.h> // Supports timing function
 
 #include "wave_io.h"
 #include "phase1_sig_proc.h"
@@ -208,7 +211,6 @@ int main(int argc, char** argv)
             /*(Dimensional Analysis): (bytes / (bytes/samp)) / samp/s = samp * s/samp = s*/
             << (wavHeader.subchunk2Size / (wavHeader.numChannels * (wavHeader.bitsPerSample/8))) / wavHeader.sampleRate
             << endl;
-    summaryFile.precision(5);
     summaryFile << "Processing Time (s): " << setprecision(8) <<  TIMER_ELAPSED/1000000.0 << endl;
     
     return 0;
