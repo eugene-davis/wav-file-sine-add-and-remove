@@ -44,9 +44,9 @@ bool nextSample(void* sample, unsigned int size, FILE *wavIn);
 
 bool saveSample(void* sample, unsigned int size, FILE *wavOut);
 
-short maxAmplitude8Bit(void* sample);
+short maxChanAmp8Bit(void* sample, unsigned short numChannels);
 
-short maxAmplitude16Bit(void* sample);
+short maxChanAmp16Bit(void* sample, unsigned short numChannels);
 
 void addSignal8Bit(void* sample);
 
@@ -75,7 +75,7 @@ int main(int argc, char** argv)
     void (*addSignal)(void*);
     
     // Function pointer to use for finding the max amplitude of a signal
-    short (*maxAmplitude)(void*);
+    short (*maxChannelAmp)(void*, unsigned short);
     
     // <editor-fold desc="Check input and file setup" defaultstate="collapsed">
     // Command as called as:
@@ -119,14 +119,14 @@ int main(int argc, char** argv)
     {
         sample = new char[wavHeader.numChannels];
         addSignal = &addSignal8Bit;
-        maxAmplitude = &maxAmplitude8Bit;
+        maxChannelAmp = &maxChanAmp8Bit;
     }
     // If 16 bit, use shorts
     else if (wavHeader.bitsPerSample == 16)
     {
         sample = new short[wavHeader.numChannels];
         addSignal = &addSignal16Bit;
-        maxAmplitude = &maxAmplitude16Bit;
+        maxChannelAmp = &maxChanAmp16Bit;
     }
     // If neither 8 nor 16, invalid sample size, exit with error
     else
@@ -152,13 +152,13 @@ int main(int argc, char** argv)
         nextSample(sample, wavHeader.numChannels * (wavHeader.bitsPerSample/8), wavIn);
         
         // Get the maximum amplitude of the sound
-        short tempAmp = (*maxAmplitude)(sample);
+        short tempAmp = (*maxChannelAmp)(sample, wavHeader.numChannels);
         if (tempAmp > amplitude)
         {
             amplitude = tempAmp;
         }
     }
-   
+    
     // Reset the file back to an offset of 44 (the start of the data)
     fseek(wavIn, 44, SEEK_SET);
     
@@ -215,18 +215,39 @@ bool nextSample(void* sample, unsigned int size, FILE *wavIn)
 
 bool saveSample(void* sample, unsigned int size, FILE *wavOut)
 {
-    // TODO - Support 8 bit samples
     fwrite(sample, size, 1, wavOut);
 }
 
-short maxAmplitude8Bit(void* sample)
+short maxChanAmp8Bit(void* sample, unsigned short numChannels)
 {
-    
+    // Cast the sample input into a character array (8 bit not 16)
+    char* cSamp = static_cast<char*>(sample);
+    // Temp variable to figure out which channel has the maximum amplitude
+    unsigned short tempAmp = 0;
+    for (unsigned short i = 0; i < numChannels; i++)
+    {
+        if (tempAmp < cSamp[i])
+        {
+            tempAmp = cSamp[i];
+        }
+    }
+    return tempAmp;
 }
 
-short maxAmplitude16Bit(void* sample)
+short maxChanAmp16Bit(void* sample, unsigned short numChannels)
 {
-    
+   // Cast the sample input into a unsigned short array (16 bit not 8)
+    unsigned short* sSamp = static_cast<unsigned short*>(sample);
+    // Temp variable to figure out which channel has the maximum amplitude
+    unsigned short tempAmp = 0;
+    for (unsigned short i = 0; i < numChannels; i++)
+    {
+        if (tempAmp < sSamp[i])
+        {
+            tempAmp = sSamp[i];
+        }
+    }
+    return tempAmp;
 }
 
 void addSignal8Bit(void* sample)
