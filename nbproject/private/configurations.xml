@@ -28,8 +28,9 @@
           <runcommandpicklistitem>"${OUTPUT_PATH}" Virus Alert.WAV Davis_E_output.WAV</runcommandpicklistitem>
           <runcommandpicklistitem>"${OUTPUT_PATH}" "Virus Alert.WAV" Davis_E_output.WAV</runcommandpicklistitem>
           <runcommandpicklistitem>"${OUTPUT_PATH}" Davis_E_orig.WAV Davis_E_output.WAV</runcommandpicklistitem>
+          <runcommandpicklistitem>"${OUTPUT_PATH}" Davis_E_orig_8bit.WAV Davis_E_output.WAV</runcommandpicklistitem>
         </runcommandpicklist>
-        <runcommand>"${OUTPUT_PATH}" Davis_E_orig.WAV Davis_E_output.WAV</runcommand>
+        <runcommand>"${OUTPUT_PATH}" Davis_E_orig_8bit.WAV Davis_E_output.WAV</runcommand>
         <rundir></rundir>
         <buildfirst>true</buildfirst>
         <terminal-type>0</terminal-type>

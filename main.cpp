@@ -9,6 +9,9 @@
 #include <stdio.h> // File writing
 #include <math.h>  // Contains sin
 #include <stdlib.h> // Contains abs
+#include <climits> // Contains constants used to check for overflow
+
+#define PI 3.14159265 // Define a value of PI as a macro rather than access memory when used
 
 using namespace std;
 
@@ -50,9 +53,11 @@ short maxChanAmp8Bit(void* sample, unsigned short numChannels);
 
 short maxChanAmp16Bit(void* sample, unsigned short numChannels);
 
-void addSignal8Bit(void* sample, unsigned short numChannels, unsigned short amplitude);
+void addSignal8Bit(void* sample, unsigned short numChannels, 
+        unsigned short amplitude, unsigned int sampleNum, unsigned int sampleRate);
 
-void addSignal16Bit(void* sample, unsigned short numChannels, unsigned short amplitude);
+void addSignal16Bit(void* sample, unsigned short numChannels, 
+        unsigned short amplitude, unsigned int sampleNum, unsigned int sampleRate);
 
 /*
  * 
@@ -74,7 +79,7 @@ int main(int argc, char** argv)
     FILE *wavOut;
     
     // Function pointer to use for adding the signal
-    void (*addSignal)(void*, unsigned short, unsigned short);
+    void (*addSignal)(void*, unsigned short, unsigned short, unsigned int, unsigned int);
     
     // Function pointer to use for finding the max amplitude of a signal
     short (*maxChannelAmp)(void*, unsigned short);
@@ -85,7 +90,7 @@ int main(int argc, char** argv)
     // therefore argc should be 3
     if (argc != 3)
     {
-        cout << "Invalid arguments. Command should be of the format"
+        cerr << "Invalid arguments. Command should be of the format"
                 << "381-project <input filename> <output filename>" << endl;
         return 1;
     }
@@ -95,7 +100,7 @@ int main(int argc, char** argv)
     // Check to see if the file actually opened
     if (wavIn == NULL) 
     {
-        cout << "File cannot be opened, please enter a valid file name." << endl;
+        cerr << "File cannot be opened, please enter a valid file name." << endl;
         return 1;
     }
     
@@ -104,7 +109,7 @@ int main(int argc, char** argv)
     // Check to see if the file actually opened
     if (wavOut == NULL) 
     {
-        cout << "File cannot be opened, please enter a valid file name." << endl;
+        cerr << "File cannot be opened, please enter a valid file name." << endl;
         return false;
     }
     // </editor-fold>
@@ -141,10 +146,7 @@ int main(int argc, char** argv)
     writeHeader(&wavHeader, wavOut);
     
     // The calculation for how many samples to take in is the size of the data (in bytes)
-    // divided by the number of channels, divided by the bits per sample divided by 8 
-    // to get bytes per sample. This gives the total number of samples
-    // divided by the number of channels, divided by the bits per sample divided by 8 
-    // to get bytes per sample. This gives the total number of samples
+    // divided by the number of channels times the bytes per sample
     int numSamples = wavHeader.subchunk2Size/ (wavHeader.numChannels * (wavHeader.bitsPerSample / 8));
     cout << wavHeader.subchunk2Size << endl
             << wavHeader.numChannels << endl
@@ -163,20 +165,20 @@ int main(int argc, char** argv)
         {
             amplitude = tempAmp;
         }
-    }
+   }
     
     // Reset the file back to an offset of 44 (the start of the data)
     fseek(wavIn, 44, SEEK_SET);
     
     // Add the sine wave
     // Iterate through the number of samples
-   for (int i = 0; i < numSamples; i++)
+   for (unsigned int i = 0; i < numSamples; i++)
     {
         // Get the next sample (includes all the channels for this sample)
         nextSample(sample, wavHeader.numChannels * (wavHeader.bitsPerSample/8), wavIn);
         
         // Add signal
-        //(*addSignal)(sample, wavHeader.numChannels, amplitude);
+        (*addSignal)(sample, wavHeader.numChannels, amplitude, i, wavHeader.sampleRate);
 
         // Save the samples to the output
         saveSample(sample, wavHeader.numChannels * (wavHeader.bitsPerSample/8), wavOut);
@@ -256,21 +258,59 @@ short maxChanAmp16Bit(void* sample, unsigned short numChannels)
     return tempAmp;
 }
 
-void addSignal8Bit(void* sample, unsigned short numChannels, unsigned short amplitude)
+void addSignal8Bit(void* sample, unsigned short numChannels, 
+        unsigned short amplitude, unsigned int sampleNum, unsigned int sampleRate)
 {
+    // Cast the sample input into a char array (16 bit not 8)
+    char* cSamp = static_cast<char*>(sample);
     
-}
-
-void addSignal16Bit(void* sample, unsigned short numChannels, unsigned short amplitude)
-{
-    // Cast the sample input into a unsigned short array (16 bit not 8)
-    short* sSamp = static_cast<short*>(sample);
+    // Calculate the time for the sineWave using the samplingRate and current sample number
+    // Cast each bit to double to ensure the calculation uses doubles
+     double time = (double) sampleNum / (double) sampleRate;
+    
+    // Sine wav calculation for this point in time - 2500 is the frequency
+    // Truncated into short (sin outputs double normally)
+    char sineWave = (amplitude/2) * sin(2*PI*2500*time);
     
     // Temp just add half of amplitude to see if it works
     for (short i = 0; i < numChannels; i++)
     {
-        sSamp[i] = sSamp[i] + amplitude / 2;
+        // Check that it doesn't overflow, if it does set to max instead
+        if (sineWave > CHAR_MAX - cSamp[i])
+        {
+            cSamp[i] = CHAR_MAX;
+        }
+        else
+        {
+            cSamp[i] = cSamp[i] + sineWave;
+        }
     }
+}
+
+void addSignal16Bit(void* sample, unsigned short numChannels, 
+        unsigned short amplitude, unsigned int sampleNum, unsigned int sampleRate)
+{
+    // Cast the sample input into a short array (16 bit not 8)
+    short* sSamp = static_cast<short*>(sample);
     
-    sample = sSamp;
+    // Calculate the time for the sineWave using the samplingRate and current sample number
+    // Cast each bit to double to ensure the calculation uses doubles
+     double time = (double) sampleNum / (double) sampleRate;
+    
+    // Sine wav calculation for this point in time - 2500 is the frequency
+    // Truncated into short (sin outputs double normally)
+    short sineWave = (amplitude/2) * sin(2*PI*2500*time);
+    
+    // Temp just add half of amplitude to see if it works
+    for (short i = 0; i < numChannels; i++)
+    {
+        if (sineWave > SHRT_MAX - sSamp[i])
+        {
+            sSamp[i] = SHRT_MAX;
+        }
+        else
+        {
+                sSamp[i] = sSamp[i] + sineWave;
+        }
+    }
 }
