@@ -36,6 +36,7 @@ OBJECTDIR=${CND_BUILDDIR}/${CND_CONF}/${CND_PLATFORM}
 # Object Files
 OBJECTFILES= \
 	${OBJECTDIR}/main.o \
+	${OBJECTDIR}/phase1_sig_proc.o \
 	${OBJECTDIR}/wave_io.o
 
 
@@ -67,6 +68,11 @@ ${OBJECTDIR}/main.o: main.cpp
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} "$@.d"
 	$(COMPILE.cc) -O2 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/main.o main.cpp
+
+${OBJECTDIR}/phase1_sig_proc.o: phase1_sig_proc.cpp 
+	${MKDIR} -p ${OBJECTDIR}
+	${RM} "$@.d"
+	$(COMPILE.cc) -O2 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/phase1_sig_proc.o phase1_sig_proc.cpp
 
 ${OBJECTDIR}/wave_io.o: wave_io.cpp 
 	${MKDIR} -p ${OBJECTDIR}
