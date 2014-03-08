@@ -29,7 +29,6 @@
 #include <iostream>
 #include <fstream> // Used to rapidly create summary file
 #include <iomanip> // Allows for setting precision on output
-#include <time.h> // Supports timing function
 
 #include "wave_io.h"
 #include "phase1_sig_proc.h"
@@ -140,10 +139,10 @@ int main(int argc, char** argv)
     * The calculation for how many samples to take in is the size of the data (in bytes)
     * divided by the number of channels times the bytes per sample
     */
-    int numSamples = wavHeader.subchunk2Size/ (wavHeader.numChannels * (wavHeader.bitsPerSample / 8));
+    unsigned int numSamples = wavHeader.subchunk2Size/ (wavHeader.numChannels * (wavHeader.bitsPerSample / 8));
     
     // Iterate through the samples to find the maximum amplitude
-   for (int i = 0; i < numSamples; i++)
+   for (unsigned int i = 0; i < numSamples; i++)
     {
         // Get the next sample (includes all the channels for this sample)
         if (!nextSample(sample, wavHeader.numChannels * (wavHeader.bitsPerSample/8), wavIn))

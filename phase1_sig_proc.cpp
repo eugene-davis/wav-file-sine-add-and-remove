@@ -91,7 +91,7 @@ void addSignal8Bit(void* sample, unsigned short numChannels,
     
     // Sine wav calculation for this point in time - 2500 is the frequency
     // Truncated into short (sin outputs double normally)
-    char sineWave = (amplitude/2) * sin(2*PI*2500*time);
+    char sineWave = (char) ((amplitude/2) * sin(2*PI*2500*time));
     
     // Temp just add half of amplitude to see if it works
     for (short i = 0; i < numChannels; i++)
@@ -129,7 +129,7 @@ void addSignal16Bit(void* sample, unsigned short numChannels,
     
     // Sine wav calculation for this point in time - 2500 is the frequency
     // Truncated into short (sin outputs double normally)
-    short sineWave = (amplitude/2) * sin(2*PI*2500*time);
+    short sineWave = (short) ((amplitude/2) * sin(2*PI*2500*time));
     
     // Temp just add half of amplitude to see if it works
     for (short i = 0; i < numChannels; i++)
