@@ -1,3 +1,0 @@
-http://www.topherlee.com/software/pcm-tut-wavformat.html
-http://www.sonicspot.com/guide/wavefiles.html
-https://ccrma.stanford.edu/courses/422/projects/WaveFormat/
