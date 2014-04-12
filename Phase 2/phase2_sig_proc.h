@@ -19,7 +19,7 @@
 extern "C" {
 #endif
 
-	void filterSignal(short* currentSample, short* bufferSample, short* coefArray, int length);
+	void filterSignal(short* currentSample, short* bufferSample, short* coArray, int length);
 
 #ifdef	__cplusplus
 }
