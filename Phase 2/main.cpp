@@ -144,7 +144,7 @@ int main(int argc, char** argv)
         }
         
         // Do filtering
-		filterSignal(sample, sampleBuffer, coeffecients, *length);
+		filterSignal(sample, wavHeader.numChannels, sampleBuffer, coeffecients, *length);
 
         // Save the samples to the output file
         if (!saveSample(sample, wavHeader.numChannels * (wavHeader.bitsPerSample/8), wavOut))
