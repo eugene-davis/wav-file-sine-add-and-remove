@@ -132,6 +132,15 @@ int main(int argc, char** argv)
     * divided by the number of channels times the bytes per sample
     */
     unsigned int numSamples = wavHeader.subchunk2Size/ (wavHeader.numChannels * (wavHeader.bitsPerSample / 8));
+
+	// Make sample buffer (number of channels times the size of the coefficient array
+	sampleBuffer = new short[wavHeader.numChannels * *length];
+
+	// Initialize sample buffer with zeros
+	for (int i = 0; i < *length * wavHeader.numChannels; i++)
+	{
+		sampleBuffer[i] = 0;
+	}
        
     // Filter
     // Iterate through the number of samples
