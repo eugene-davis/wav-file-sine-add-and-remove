@@ -73,7 +73,7 @@ int main(int argc, char** argv)
     // 381-project <inputfilename> <outputfilename> [fine/coarse] [lowpass/band]
     // it defaults to coarse lowpass filter, for other filters use both options
 	// must be specified
-    if (argc != 3 || argc != 5)
+    if (argc != 3 && argc != 5)
     {
         cerr << "Invalid arguments. Command should be of the format"
              << "381-project <input filename> <output filename> [fine/coarse] [lowpass/band]" << endl
