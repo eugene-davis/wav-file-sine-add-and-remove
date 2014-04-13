@@ -77,7 +77,7 @@ extern "C" {
      * @param wavIn  A file handle for the input file
      * @return bool Indicates if it was successful
      */
-    bool nextSample(void* sample, unsigned int size, FILE *wavIn);
+    bool nextSample(short* sample, unsigned int size, FILE *wavIn);
 
     /**
     * Retrieves the next sample in the file. Requires that the file currently
@@ -89,7 +89,7 @@ extern "C" {
     * @param wavOut  A file handle for the output file
     * @return bool Indicates if it was successful
     */
-    bool saveSample(void* sample, unsigned int size, FILE *wavOut);
+    bool saveSample(short* sample, unsigned int size, FILE *wavOut);
 
 
 #ifdef	__cplusplus

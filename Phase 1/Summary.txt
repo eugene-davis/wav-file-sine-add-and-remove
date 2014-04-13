@@ -2,4 +2,4 @@ Input File Name: Davis_E_orig.WAV
 Output File Name: Davis_E_processed.WAV
 Sampling Frequency (samp/s): 44100
 Recording Length (s): 59
-Processing Time (s): 0.34
+Processing Time (s): 0.36000001
