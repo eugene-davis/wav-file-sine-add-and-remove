@@ -34,11 +34,23 @@
 #include "wave_io.h"
 #include "phase2_sig_proc.h"
 
-// Filters
-//#include "bandStopFine.h" // High quality (but large) band stop filter
-//#include "lowPassFine.h"  // High quality (but large) low pass filter
-#include "lowPassCoarse.h"  // Low quality (but small) low pass filter
+// Filters 44800
+// High Quality
+#include "Filters/bandStopFine.h" // High quality (but large) band stop filter
+#include "Filters/lowPassFine.h"  // High quality (but large) low pass filter
 
+// Low Quality
+#include "Filters/bandStopCoarse.h" // Low quality (but small) band pass filter
+#include "Filters/lowPassCoarse.h"  // Low quality (but small) low pass filter
+
+// Filters 22000
+// High Quality
+#include "Filters/bandStopFine22k.h" // High quality (but large) band stop filter
+#include "Filters/lowPassFine22k.h"  // High quality (but large) low pass filter
+
+// Low Quality
+#include "Filters/bandStopCoarse22k.h" // Low quality (but small) band pass filter
+#include "Filters/lowPassCoarse22k.h"  // Low quality (but small) low pass filter
 using namespace std;
 
 /*
@@ -83,13 +95,7 @@ int main(int argc, char** argv)
         return 1;
     }
 
-	if (argc == 3)
-	{
-		coeffecients = bLowPassCoarse;
-		length = &bLowPassCoarseLength;
-	}
 
-	// Handle other options
     
     // Open input file
     wavIn = fopen(argv[1], "rb");
@@ -123,6 +129,24 @@ int main(int argc, char** argv)
         cerr << "Invalid sample size." << endl;
         return 1;
     }
+
+	// Handle options
+	// First check sample rate
+	if (!(wavHeader.sampleRate == 44100 || wavHeader.sampleRate == 22000))
+	{
+		cerr << "Invalid sample rate, must be 441000 or 22000" << endl;
+		return 1; 
+	}
+
+	// Default input (three arguments)
+	if (argc == 3)
+	{
+		/*coeffecients = bLowPassCoarse;
+		length = &bLowPassCoarseLength;*/
+		coeffecients = bBandStopCoarse;
+		length = &bBandStopCoarseLength;
+	}
+	
     
     // Setup header in the output file
     if (!writeHeader(&wavHeader, wavOut))
