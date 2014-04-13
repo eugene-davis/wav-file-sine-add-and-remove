@@ -29,13 +29,15 @@
 #include <iostream>
 #include <fstream> // Used to rapidly create summary file
 #include <iomanip> // Allows for setting precision on output
+#include <string.h> // memcopy
 
 #include "wave_io.h"
 #include "phase2_sig_proc.h"
 
 // Filters
-#include "bandStopFine.h" // High quality (but large) band stop filter
-#include "lowPassFine.h"  // High quality (but large) low pass filter
+//#include "bandStopFine.h" // High quality (but large) band stop filter
+//#include "lowPassFine.h"  // High quality (but large) low pass filter
+#include "lowPassCoarse.h"  // Low quality (but small) low pass filter
 
 using namespace std;
 
@@ -55,9 +57,9 @@ int main(int argc, char** argv)
    /*
     * Create pointers for arrays, only 16-bit supported it is a short
     */
-	short *sampleBuffer;
-    short *sample;
-	short *coeffecients;
+	short **sampleBuffer;
+	short *outputBuffer;
+	double *coeffecients;
 
 	/*
 	* Create a pointer to the co-efficient array size
@@ -83,8 +85,8 @@ int main(int argc, char** argv)
 
 	if (argc == 3)
 	{
-		coeffecients = bLowPassFine;
-		length = &bLowPassFineLength;
+		coeffecients = bLowPassCoarse;
+		length = &bLowPassCoarseLength;
 	}
 
 	// Handle other options
@@ -133,33 +135,45 @@ int main(int argc, char** argv)
     */
     unsigned int numSamples = wavHeader.subchunk2Size/ (wavHeader.numChannels * (wavHeader.bitsPerSample / 8));
 
-	// Make sample buffer (number of channels times the size of the coefficient array)
-	sampleBuffer = new short[wavHeader.numChannels * *length];
 
-	// Make sample array (number of channels times the sample size)
-	sample = new short[wavHeader.numChannels * 16];
 
-	// Initialize sample buffer with zeros
-	for (int i = 0; i < *length * wavHeader.numChannels; i++)
+	// Setup input buffers for each channel in the WAV in a pointer array
+	sampleBuffer = new short*[wavHeader.numChannels];
+	// Zero out sample buffer's contents
+	for (int i = 0; i < wavHeader.numChannels; i++)
 	{
-		sampleBuffer[i] = 0;
+		sampleBuffer[i] = new short[*length];
+		for (int j = 0; j < *length; j++)
+		{
+			sampleBuffer[i][j] = 0;
+		}
 	}
-       
+
     // Filter
     // Iterate through the number of samples
    for (unsigned int i = 0; i < numSamples; i++)
     {
+		// Variable to get all channels in (to be split up) then recombine them back into for writing
+		short *currentSample;
+		currentSample = new short[wavHeader.numChannels];		
+
         // Get the next sample (includes all the channels for this sample)
-        if (!nextSample(sample, wavHeader.numChannels * (wavHeader.bitsPerSample/8), wavIn))
+        if (!nextSample(&currentSample[0], wavHeader.numChannels * (wavHeader.bitsPerSample/8), wavIn))
         {
             return 1;
         }
-        
-        // Do filtering
-		filterSignal(sample, wavHeader.numChannels, sampleBuffer, coeffecients, *length);
 
-        // Save the samples to the output file
-        if (!saveSample(sample, wavHeader.numChannels * (wavHeader.bitsPerSample/8), wavOut))
+        // Split channels and do filtering
+		for (int j = 0; j < wavHeader.numChannels; j++)
+		{
+			// Split up the channels into separate arrays
+			sampleBuffer[j][0] = currentSample[j];
+			filterSample(&currentSample[j], sampleBuffer[j], coeffecients, *length);
+		}
+
+        // Save the result to the output file
+        if (!saveSample(currentSample, wavHeader.numChannels * (wavHeader.bitsPerSample/8), wavOut))
+		//if (!saveSample(&sampleBuffer[0], wavHeader.numChannels * (wavHeader.bitsPerSample/8), wavOut))
         {
             return 1;
         }
