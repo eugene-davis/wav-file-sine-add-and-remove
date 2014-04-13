@@ -14,6 +14,10 @@
 
 using namespace std;
 
+/**
+* filterSample the buffer of input samples (bufferSample), the coeffecient array and the length of the window
+* and returns the filtered sample via currentSample
+*/
 void filterSample(short* currentSample, short* bufferSample, double* coArray, int length)
 {
 	// Temp double variable to store result in

@@ -37,20 +37,17 @@
 // Filters 44800
 // High Quality
 #include "Filters/bandStopFine.h" // High quality (but large) band stop filter
-#include "Filters/lowPassFine.h"  // High quality (but large) low pass filter
 
 // Low Quality
-#include "Filters/bandStopCoarse.h" // Low quality (but small) band pass filter
 #include "Filters/lowPassCoarse.h"  // Low quality (but small) low pass filter
 
 // Filters 22000
 // High Quality
 #include "Filters/bandStopFine22k.h" // High quality (but large) band stop filter
-#include "Filters/lowPassFine22k.h"  // High quality (but large) low pass filter
 
 // Low Quality
-#include "Filters/bandStopCoarse22k.h" // Low quality (but small) band pass filter
 #include "Filters/lowPassCoarse22k.h"  // Low quality (but small) low pass filter
+
 using namespace std;
 
 /*
@@ -87,11 +84,11 @@ int main(int argc, char** argv)
     // 381-project <inputfilename> <outputfilename> [fine/coarse] [lowpass/band]
     // it defaults to coarse lowpass filter, for other filters use both options
 	// must be specified
-    if (argc != 3 && argc != 5)
+    if (argc != 3 && (argc != 4 && *argv[3] != 'h'))
     {
         cerr << "Invalid arguments. Command should be of the format"
-             << "381-project <input filename> <output filename> [fine/coarse] [lowpass/band]" << endl
-			<< "Defaults to coarse lowpass filter, for other filters use both options." << endl;
+             << "381-project <input filename> <output filename> [h]" << endl
+			<< "Defaults to coarse lowpass filter, for high quality (bandpass, fine grain) filter add h at end." << endl;
         return 1;
     }
 
@@ -132,19 +129,40 @@ int main(int argc, char** argv)
 
 	// Handle options
 	// First check sample rate
-	if (!(wavHeader.sampleRate == 44100 || wavHeader.sampleRate == 22000))
+	if (!(wavHeader.sampleRate == 44100 || wavHeader.sampleRate == 22050))
 	{
-		cerr << "Invalid sample rate, must be 441000 or 22000" << endl;
+		cerr << "Invalid sample rate, must be 441000 or 22050" << endl;
 		return 1; 
 	}
 
 	// Default input (three arguments)
 	if (argc == 3)
 	{
-		/*coeffecients = bLowPassCoarse;
-		length = &bLowPassCoarseLength;*/
-		coeffecients = bBandStopCoarse;
-		length = &bBandStopCoarseLength;
+		
+		if (wavHeader.sampleRate == 44100)
+		{
+			coeffecients = bLowPassCoarse;
+			length = &bLowPassCoarseLength;
+		}
+		else
+		{
+			coeffecients = bLowPassCoarse22k;
+			length = &bLowPassCoarseLength22k;
+		}
+	}
+	// High quality (good bandpass) filter
+	else if (*argv[3] == 'h')
+	{
+		if (wavHeader.sampleRate == 44100)
+		{
+			coeffecients = bBandStopFine;
+			length = &bBandStopFineLength;
+		}
+		else
+		{
+			coeffecients = bBandStopFine22k;
+			length = &bBandStopFineLength22k;
+		}
 	}
 	
     
