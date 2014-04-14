@@ -74,11 +74,10 @@ int main(int argc, char** argv)
     // 381-project <inputfilename> <outputfilename> [fine/coarse] [lowpass/band]
     // it defaults to coarse lowpass filter, for other filters use both options
 	// must be specified
-    if (argc != 3 && (argc != 4 && *argv[3] != 'h'))
+    if (argc != 2)
     {
         cerr << "Invalid arguments. Command should be of the format"
-             << "381-project <input filename> <output filename> [h]" << endl
-			<< "Defaults to coarse lowpass filter, for high quality (bandpass, fine grain) filter add h at end." << endl;
+             << "381-project <input filename>" << endl;
         return 1;
     }
 
@@ -91,15 +90,6 @@ int main(int argc, char** argv)
     {
         cerr << "File cannot be opened, please enter a valid file name." << endl;
         return 1;
-    }
-    
-    // Open output file
-    wavOut = fopen(argv[2], "wb");
-    // Check to see if the file actually opened
-    if (wavOut == NULL) 
-    {
-        cerr << "File cannot be opened, please enter a valid file name." << endl;
-        return false;
     }
     
     // If cannot read in header, return 1 as program has failed
@@ -125,11 +115,6 @@ int main(int argc, char** argv)
 		return 1; 
 	}	
     
-    // Setup header in the output file
-    if (!writeHeader(&wavHeader, wavOut))
-    {
-        return 1;
-    }
    /*
     * The calculation for how many samples to take in is the size of the data (in bytes)
     * divided by the number of channels times the bytes per sample
@@ -158,6 +143,24 @@ int main(int argc, char** argv)
 
 	// Perform FFT
 	fft(1, sampleBuffer);
+
+	// Analyse it
+	double maxSpec = (sampleBuffer.at(0).real())*(sampleBuffer.at(0).real()) + (sampleBuffer.at(0).imag())*(sampleBuffer.at(0).imag());
+	double tmp = 0;
+	int maxIndex = 0;
+
+	for (int j = 1; j < FFT_LEN; j++) 
+	{
+		tmp = (sampleBuffer.at(j).real())*(sampleBuffer.at(j).real()) + (sampleBuffer.at(j).imag())*(sampleBuffer.at(j).imag());
+		if (tmp > maxSpec) 
+		{
+			maxSpec = tmp;
+			maxIndex = j;
+		}
+	}
+
+	//cout << "Analysing time: " << setprecision(12) << fixed << (float)(endTime - startTime) / CLOCKS_PER_SEC << " seconds" << endl;
+	cout << "Frequency: " << maxIndex * wavHeader.sampleRate / FFT_LEN << " Hz" << endl;
     
     // Now that actual processing is complete but before writing the summary file, stop timer
     t = clock() - t;
@@ -167,7 +170,6 @@ int main(int argc, char** argv)
     summaryFile.open("Summary.txt");
     
     summaryFile << "Input File Name: " << argv[1] << endl;
-    summaryFile << "Output File Name: " << argv[2] << endl;
     summaryFile << "Sampling Frequency (samp/s): " << wavHeader.sampleRate << endl;
     summaryFile << "Recording Length (s): " 
             /*(Dimensional Analysis): (bytes / (bytes/samp)) / samp/s = samp * s/samp = s*/
