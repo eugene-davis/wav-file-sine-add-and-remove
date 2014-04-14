@@ -68,7 +68,7 @@ bool writeHeader(header *wavHeader, FILE *wavOut)
  * @param wavIn  A file handle for the input file
  * @return bool Indicates if it was successful
  */
-bool nextSample(short* sample, unsigned int size, FILE *wavIn)
+bool nextSample(void* sample, unsigned int size, FILE *wavIn)
 {
     fread(sample, size, 1, wavIn);
     
@@ -91,7 +91,7 @@ bool nextSample(short* sample, unsigned int size, FILE *wavIn)
  * @param wavOut  A file handle for the output file
  * @return bool Indicates if it was successful
  */
-bool saveSample(short* sample, unsigned int size, FILE *wavOut)
+bool saveSample(void* sample, unsigned int size, FILE *wavOut)
 {
     fwrite(sample, size, 1, wavOut);
     
