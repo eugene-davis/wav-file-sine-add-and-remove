@@ -54,16 +54,6 @@ int main(int argc, char** argv)
     
     // Create new struct for header
     header wavHeader;
-   /*
-    * Create pointers for arrays, only 16-bit supported it is a short
-    */
-	vector< complex<double> > sampleBuffer;
-	double *coeffecients;
-
-	/*
-	* Create a pointer to the co-efficient array size
-	*/
-	int *length;
 
     // Input file handle to use - opened in readHeader
     FILE *wavIn;
@@ -107,21 +97,8 @@ int main(int argc, char** argv)
         return 1;
     }
 
-	// Handle options
-	// First check sample rate
-	if (!(wavHeader.sampleRate == 44100 || wavHeader.sampleRate == 22050))
-	{
-		cerr << "Invalid sample rate, must be 441000 or 22050" << endl;
-		return 1; 
-	}	
-    
-   /*
-    * The calculation for how many samples to take in is the size of the data (in bytes)
-    * divided by the number of channels times the bytes per sample
-    */
-    unsigned int numSamples = wavHeader.subchunk2Size/ (wavHeader.numChannels * (wavHeader.bitsPerSample / 8));
 
-	
+	vector< complex<double> > sampleBuffer;
 
     // Get samples for FFT
     // Iterate through the samples until FFT_LEN hit
@@ -146,16 +123,17 @@ int main(int argc, char** argv)
 
 	// Analyse it
 	double maxSpec = (sampleBuffer.at(0).real())*(sampleBuffer.at(0).real()) + (sampleBuffer.at(0).imag())*(sampleBuffer.at(0).imag());
-	double tmp = 0;
+	double temp = 0;
 	int maxIndex = 0;
 
-	for (int j = 1; j < FFT_LEN; j++) 
+	for (int i = 1; i < FFT_LEN; i++) 
 	{
-		tmp = (sampleBuffer.at(j).real())*(sampleBuffer.at(j).real()) + (sampleBuffer.at(j).imag())*(sampleBuffer.at(j).imag());
-		if (tmp > maxSpec) 
+		temp = (sampleBuffer.at(i).real())*(sampleBuffer.at(i).real()) + (sampleBuffer.at(i).imag())*(sampleBuffer.at(i).imag());
+
+		if (temp > maxSpec) 
 		{
-			maxSpec = tmp;
-			maxIndex = j;
+			maxSpec = temp;
+			maxIndex = i;
 		}
 	}
 
