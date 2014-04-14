@@ -37,7 +37,7 @@
 #include "bonus_fourier.h"
 
 // Pick a power of 2 for the FFT length (since the FFT has a power of 2 limitation)
-#define FFT_LEN 2048
+#define FFT_LEN 32768 // 2^15
 
 using namespace std;
 
@@ -99,23 +99,24 @@ int main(int argc, char** argv)
 
 
 	vector< complex<double> > sampleBuffer;
+	
+	// Variable to get all channels in (to be split up)
+	short *currentSample;
+	currentSample = new short[wavHeader.numChannels];	
 
     // Get samples for FFT
     // Iterate through the samples until FFT_LEN hit
    for (unsigned int i = 0; i < FFT_LEN; i++)
     {
-		// Variable to get all channels in (to be split up)
-		short *currentSample;
-		currentSample = new short[wavHeader.numChannels];		
-
-        // Get the next sample (includes all the channels for this sample)
+		// Get the next sample (includes all the channels for this sample)
         if (!nextSample(&currentSample[0], wavHeader.numChannels * (wavHeader.bitsPerSample/8), wavIn))
         {
             return 1;
         }
 
-		// Get first channel
-		sampleBuffer.push_back(currentSample[0]);		
+		// Save the first channel
+		short chan0Sample = currentSample[0];
+		sampleBuffer.push_back(chan0Sample);		
     }
 
 	// Perform FFT
@@ -136,10 +137,7 @@ int main(int argc, char** argv)
 			maxIndex = i;
 		}
 	}
-
-	//cout << "Analysing time: " << setprecision(12) << fixed << (float)(endTime - startTime) / CLOCKS_PER_SEC << " seconds" << endl;
-	cout << "Frequency: " << maxIndex * wavHeader.sampleRate / FFT_LEN << " Hz" << endl;
-    
+   
     // Now that actual processing is complete but before writing the summary file, stop timer
     t = clock() - t;
     
@@ -148,6 +146,7 @@ int main(int argc, char** argv)
     summaryFile.open("Summary.txt");
     
     summaryFile << "Input File Name: " << argv[1] << endl;
+	summaryFile << "Frequency: " << maxIndex * wavHeader.sampleRate / FFT_LEN << " Hz" << endl;
     summaryFile << "Sampling Frequency (samp/s): " << wavHeader.sampleRate << endl;
     summaryFile << "Recording Length (s): " 
             /*(Dimensional Analysis): (bytes / (bytes/samp)) / samp/s = samp * s/samp = s*/
