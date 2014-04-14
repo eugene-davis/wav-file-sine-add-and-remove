@@ -8,8 +8,6 @@
 */
 
 #include "phase2_sig_proc.h"
-#include "wave_io.h"
-#include <string.h> // memcopy
 #include <iostream>
 
 using namespace std;
