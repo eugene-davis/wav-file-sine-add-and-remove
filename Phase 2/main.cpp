@@ -1,29 +1,16 @@
 /* 
- * This function drives the functions to read in a wave file, add a sinewave to
- * it and then write it all out to a drive.
+ * This program reads in a wav file, and applies a filter to it (either a low pass filter
+ * or a band stop, depending on user selection, then writes out the filtered wav file.
  * 
- * Although it requires reading everything from the file twice, this program
- * simulates a real time signal by not storing samples in memory other than
- * the currently being processed sample.
- * 
- * void pointers were used for the data type of the array storing samples so as
- * to reduce the amount of conditionals required to handle the difference between
- * 8 and 16 bit samples. This allows this top level code to be more abstract and
- * maintainable/extensible for the different sample sizes.
- * 
- * function pointers were used for the 8 and 16 byte specific functions, again
- * to allow this top level code to be more abstract, and thus make it more easily
- * maintainable/extensible.
  * 
  * Run with:
- * 381-project <inputfilename> <outputfilename>
+ * 381-project <inputfilename> <outputfilename> [h]
+ * The h flag uses a high quality band stop rather than a low quality low pass filter
  * 
  * File:   main.cpp
  * Author: Eugene Davis
  * Class: CPE 381
- * Project Phase 1
- *
- * Created on March 4, 2014, 1:44 AM
+ * Project Phase 2
  */
 
 #include <iostream>
@@ -81,9 +68,8 @@ int main(int argc, char** argv)
     FILE *wavOut;
     
     // Command as called as:
-    // 381-project <inputfilename> <outputfilename> [fine/coarse] [lowpass/band]
-    // it defaults to coarse lowpass filter, for other filters use both options
-	// must be specified
+    // 381-project <inputfilename> <outputfilename> [h]
+    // Defaults to a low pass filter, with h flag, uses a high quality band stop
     if (argc != 3 && (argc != 4 && *argv[3] != 'h'))
     {
         cerr << "Invalid arguments. Command should be of the format"
@@ -135,9 +121,13 @@ int main(int argc, char** argv)
 		return 1; 
 	}
 
+	// Variable to store description of filter applied
+	string filterType;
+
 	// Default input (three arguments)
 	if (argc == 3)
 	{
+		filterType = "Low Pass";
 		
 		if (wavHeader.sampleRate == 44100)
 		{
@@ -150,9 +140,11 @@ int main(int argc, char** argv)
 			length = &bLowPassCoarseLength22k;
 		}
 	}
-	// High quality (good bandpass) filter
+	// High quality (good band stop) filter
 	else if (*argv[3] == 'h')
 	{
+		filterType = "Band Stop";
+
 		if (wavHeader.sampleRate == 44100)
 		{
 			coeffecients = bBandStopFine;
@@ -230,6 +222,7 @@ int main(int argc, char** argv)
     
     summaryFile << "Input File Name: " << argv[1] << endl;
     summaryFile << "Output File Name: " << argv[2] << endl;
+	summaryFile << "Filter type: " << filterType << endl;
     summaryFile << "Sampling Frequency (samp/s): " << wavHeader.sampleRate << endl;
     summaryFile << "Recording Length (s): " 
             /*(Dimensional Analysis): (bytes / (bytes/samp)) / samp/s = samp * s/samp = s*/
