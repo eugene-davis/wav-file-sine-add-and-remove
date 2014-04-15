@@ -1,0 +1,6 @@
+Input File Name: Davis_E_noise.WAV
+Output File Name: Davis_E_lp.WAV
+Filter type: Low Pass
+Sampling Frequency (samp/s): 44100
+Recording Length (s): 59
+Processing Time (s): 16.17

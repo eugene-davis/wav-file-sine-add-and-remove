@@ -1,0 +1,6 @@
+Input File Name: Davis_E_noise.WAV
+Output File Name: Davis_E_bs.WAV
+Filter type: Band Stop
+Sampling Frequency (samp/s): 44100
+Recording Length (s): 59
+Processing Time (s): 150.36
