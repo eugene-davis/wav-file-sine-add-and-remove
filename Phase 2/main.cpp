@@ -17,6 +17,7 @@
 #include <fstream> // Used to rapidly create summary file
 #include <iomanip> // Allows for setting precision on output
 #include <string.h> // memcopy
+#include <string>
 
 #include "wave_io.h"
 #include "phase2_sig_proc.h"
@@ -54,7 +55,6 @@ int main(int argc, char** argv)
     * Create pointers for arrays, only 16-bit supported it is a short
     */
 	short **sampleBuffer;
-	short *outputBuffer;
 	double *coeffecients;
 
 	/*
@@ -107,7 +107,7 @@ int main(int argc, char** argv)
     /*
      *  Check sample size
      */
-	if (!wavHeader.bitsPerSample == 16)
+	if (!(wavHeader.bitsPerSample == 16))
     {
         cerr << "Invalid sample size." << endl;
         return 1;
