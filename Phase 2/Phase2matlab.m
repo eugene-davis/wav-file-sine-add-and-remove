@@ -1,3 +1,6 @@
+%Import Orginal file
+[orig, Fs] = wavread('Davis_E_orig.WAV');
+
 %Import noisy file
 [noise, Fs] = wavread('Davis_E_noise.WAV');
 sptool
