@@ -109,7 +109,7 @@ int main(int argc, char** argv)
      */
 	if (!(wavHeader.bitsPerSample == 16))
     {
-        cerr << "Invalid sample size." << endl;
+        cerr << "Invalid sample size - must be 16 bits" << endl;
         return 1;
     }
 
