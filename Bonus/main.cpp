@@ -38,6 +38,7 @@
 
 // Pick a power of 2 for the FFT length (since the FFT has a power of 2 limitation)
 #define FFT_LEN 32768 // 2^15
+//#define FFT_LEN 2048
 
 using namespace std;
 
@@ -98,6 +99,24 @@ int main(int argc, char** argv)
     }
 
 
+
+	// Generate an array of proper size (FFT_LEN) to apply a Welch window
+	double* window;
+	window = new double[FFT_LEN];
+	// To be certain, set the first value to zero rather than using the calculation
+	window[0] = 0;
+	
+	// Use Welch window's equation ( https://en.wikipedia.org/wiki/Window_function#Welch_window )
+	for (int i = 1; i < FFT_LEN - 1; i++)
+	{
+		window[i] = 1 - ((i - ( (FFT_LEN - 1) / 2 ) ) / ( ( FFT_LEN + 1 ) / 2));
+	}
+
+	// To be certain, set the last value to 0 manually rather than with the calculation
+	window[FFT_LEN - 1 ] = 0;
+
+
+
 	vector< complex<double> > sampleBuffer;
 	
 	// Variable to get all channels in (to be split up)
@@ -114,8 +133,9 @@ int main(int argc, char** argv)
             return 1;
         }
 
-		// Save the first channel
-		short chan0Sample = currentSample[0];
+		// Save the first channel, multiplying it by the current value for the window
+		//cout << window[i] << endl;
+		double chan0Sample = currentSample[0] * window[i];
 		sampleBuffer.push_back(chan0Sample);		
     }
 
@@ -140,6 +160,8 @@ int main(int argc, char** argv)
    
     // Now that actual processing is complete but before writing the summary file, stop timer
     t = clock() - t;
+
+	cout << "Num of samps " << wavHeader.subchunk2Size << endl;
     
     // Write to summary text file
     ofstream summaryFile;

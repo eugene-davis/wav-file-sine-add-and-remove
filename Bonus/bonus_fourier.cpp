@@ -9,7 +9,7 @@
 
 #include "bonus_fourier.h"
 
-// Define PI
+// Define PI for fft function to use
 double pi = 4 * atan(1.0);
 
 /*
