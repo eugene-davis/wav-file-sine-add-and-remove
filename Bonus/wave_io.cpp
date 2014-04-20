@@ -9,6 +9,7 @@
 #include "wave_io.h"
 
 #include <iostream>
+#include <fstream>
 
 using namespace std;
 
@@ -78,6 +79,13 @@ bool nextSample(void* sample, unsigned int size, FILE *wavIn)
         cerr << "Errors have occurred in reading from the input file." << endl;
         return false;
     }
+	
+	// end of file reached
+	if (feof(wavIn))
+	{
+		return false;
+	}
+
     return true;
 }
 

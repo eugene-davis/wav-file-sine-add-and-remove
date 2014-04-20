@@ -120,7 +120,8 @@ int main(int argc, char** argv)
     * The calculation for how many samples to take in is the size of the data (in bytes)
     * divided by the number of channels times the bytes per sample
     */
-    unsigned int numSamples = wavHeader.subchunk2Size/ (wavHeader.numChannels * (wavHeader.bitsPerSample / 8));
+    unsigned int numSamples = wavHeader.subchunk2Size / (2 * wavHeader.numChannels * (wavHeader.bitsPerSample / 8));
+	cout << numSamples << endl;
 
 	vector< complex<double> > sampleBuffer;
 	
@@ -143,14 +144,22 @@ int main(int argc, char** argv)
 		    {
 				// If the last sample has been hit, will have to pad with zeros to get a power of 2 - this will dramatically add to spectral leakage,
 				// but only for last sample and allows a simple alogrithm can be used
-		        for (unsigned short j = 0; j < wavHeader.numChannels; j++)
+				if (feof(wavIn))
 				{
-					currentSample[j] = 0;
+		        	for (unsigned short j = 0; j < wavHeader.numChannels; j++)
+					{
+						currentSample[j] = 0;
+					}
+				}
+				// Else an error
+				else
+				{
+					return 1;
 				}
 		    }
 
 			// Save the first channel, multiplying it by the current value for the window
-			double chan0Sample = (double) currentSample[0] * window[k];
+			double chan0Sample = currentSample[0] * window[k];
 			sampleBuffer.push_back(chan0Sample);	
 		}	
 
@@ -190,7 +199,6 @@ int main(int argc, char** argv)
     // Now that actual processing is complete but before writing the summary file, stop timer
     t = clock() - t;
 
-	cout << "Num of samps " << wavHeader.subchunk2Size << endl;
     
     // Write to summary text file
     ofstream summaryFile;
