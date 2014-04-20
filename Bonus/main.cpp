@@ -199,14 +199,14 @@ int main(int argc, char** argv)
 		//cout << maxIndices.at(i) << endl;
 		avgMax += maxIndices.at(i);
 	}
-	avgMax /= i;
+	avgMax = avgMax / i;
 
 	// Calculate median - quick way (https://stackoverflow.com/questions/12243902/median-selection-algorithm)
 	size_t middle = maxIndices.size()/2;
 	nth_element(maxIndices.begin(), maxIndices.begin() + middle, maxIndices.end());
-	cout << maxIndices[middle] << endl;
+	cout << maxIndices[middle] * wavHeader.sampleRate / FFT_LEN << endl;
 
-	cout << avgMax << endl;
+	cout << avgMax * wavHeader.sampleRate / FFT_LEN << endl;
 
    
     // Now that actual processing is complete but before writing the summary file, stop timer
