@@ -37,8 +37,8 @@
 #include "bonus_fourier.h"
 
 // Pick a power of 2 for the FFT length (since the FFT has a power of 2 limitation)
-#define FFT_LEN 32768 // 2^15
-//#define FFT_LEN 2048
+//#define FFT_LEN 32768 // 2^15
+#define FFT_LEN 1024
 
 using namespace std;
 
@@ -109,7 +109,8 @@ int main(int argc, char** argv)
 	// Use Welch window's equation ( https://en.wikipedia.org/wiki/Window_function#Welch_window )
 	for (int i = 1; i < FFT_LEN - 1; i++)
 	{
-		window[i] = 1 - ((i - ( (FFT_LEN - 1) / 2 ) ) / ( ( FFT_LEN + 1 ) / 2));
+		// Much casting required to force this number into a double, otherwise it ends up always 1
+		window[i] = 1.0 - pow(((double) i - ( ((double) FFT_LEN - 1.0)/2.0 )) / (((double) FFT_LEN + 1.0)/2.0), 2);
 	}
 
 	// To be certain, set the last value to 0 manually rather than with the calculation
@@ -127,10 +128,8 @@ int main(int argc, char** argv)
 	short *currentSample;
 	currentSample = new short[wavHeader.numChannels];	
 
-	// FFT Variables (to be replaced with buffers later)
-	double maxSpec;
-	double temp;
-	int maxIndex;
+	// FFT Buffers
+	vector<double> maxIndices;
 
     // Get samples for FFT
     // Iterate through the samples until the entire thing has been sampled (padded to be divisible by the FFT_LEN)
@@ -151,12 +150,17 @@ int main(int argc, char** argv)
 		    }
 
 			// Save the first channel, multiplying it by the current value for the window
-			double chan0Sample = currentSample[0] * window[k];
+			double chan0Sample = (double) currentSample[0] * window[k];
 			sampleBuffer.push_back(chan0Sample);	
 		}	
 
 		// Perform FFT for each time window
 		fft(1, sampleBuffer);
+
+		// FFT Variables
+		double maxSpec;
+		double temp;
+		int maxIndex;
 
 		// Analyse it
 		maxSpec = (sampleBuffer.at(0).real())*(sampleBuffer.at(0).real()) + (sampleBuffer.at(0).imag())*(sampleBuffer.at(0).imag());
@@ -173,7 +177,14 @@ int main(int argc, char** argv)
 				maxIndex = i;
 			}
 		}
+		maxIndices.push_back(maxIndex);
     }
+
+	// Processing to discover dominant frequency
+	for (int i = 0; i < maxIndices.size(); i++)
+	{
+		cout << maxIndices.at(i) << endl;
+	}
 
    
     // Now that actual processing is complete but before writing the summary file, stop timer
@@ -186,7 +197,7 @@ int main(int argc, char** argv)
     summaryFile.open("Summary.txt");
     
     summaryFile << "Input File Name: " << argv[1] << endl;
-	summaryFile << "Frequency: " << maxIndex * wavHeader.sampleRate / FFT_LEN << " Hz" << endl;
+	//summaryFile << "Frequency: " << maxIndex * wavHeader.sampleRate / FFT_LEN << " Hz" << endl;
     summaryFile << "Sampling Frequency (samp/s): " << wavHeader.sampleRate << endl;
     summaryFile << "Recording Length (s): " 
             /*(Dimensional Analysis): (bytes / (bytes/samp)) / samp/s = samp * s/samp = s*/
