@@ -1,0 +1,8 @@
+Input File Name: /home/eugene/Documents/College/Spring 2014/CPE 381/school/381-project/Bonus/Davis_E_lp.WAV
+Channel 0 average frequency: 18330.6
+Channel 0 median frequency: 193.799
+Channel 1 average frequency: 18594.4
+Channel 1 median frequency: 193.799
+Sampling Frequency (samp/s): 44100
+Recording Length (s): 59
+Processing Time (s): 4.1100001
