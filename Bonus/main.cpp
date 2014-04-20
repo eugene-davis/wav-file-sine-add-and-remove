@@ -30,6 +30,7 @@
 #include <fstream> // Used to rapidly create summary file
 #include <iomanip> // Allows for setting precision on output
 #include <string.h> // memcopy
+#include <algorithm> // Used for nth_element
 #include <complex>
 #include <vector>
 
@@ -38,7 +39,8 @@
 
 // Pick a power of 2 for the FFT length (since the FFT has a power of 2 limitation)
 //#define FFT_LEN 32768 // 2^15
-#define FFT_LEN 1024
+#define FFT_LEN 4096 // 2^12
+//#define FFT_LEN 8192 // 2^13
 
 using namespace std;
 
@@ -121,7 +123,6 @@ int main(int argc, char** argv)
     * divided by the number of channels times the bytes per sample
     */
     unsigned int numSamples = wavHeader.subchunk2Size / (2 * wavHeader.numChannels * (wavHeader.bitsPerSample / 8));
-	cout << numSamples << endl;
 
 	vector< complex<double> > sampleBuffer;
 	
@@ -190,10 +191,22 @@ int main(int argc, char** argv)
     }
 
 	// Processing to discover dominant frequency
-	for (int i = 0; i < maxIndices.size(); i++)
+	int i;
+	int avgMax = 0;
+	// Calculate average
+	for (i = 0; i < maxIndices.size(); i++)
 	{
-		cout << maxIndices.at(i) << endl;
+		//cout << maxIndices.at(i) << endl;
+		avgMax += maxIndices.at(i);
 	}
+	avgMax /= i;
+
+	// Calculate median - quick way (https://stackoverflow.com/questions/12243902/median-selection-algorithm)
+	size_t middle = maxIndices.size()/2;
+	nth_element(maxIndices.begin(), maxIndices.begin() + middle, maxIndices.end());
+	cout << maxIndices[middle] << endl;
+
+	cout << avgMax << endl;
 
    
     // Now that actual processing is complete but before writing the summary file, stop timer
