@@ -115,7 +115,11 @@ int main(int argc, char** argv)
 	// To be certain, set the last value to 0 manually rather than with the calculation
 	window[FFT_LEN - 1 ] = 0;
 
-
+	/*
+    * The calculation for how many samples to take in is the size of the data (in bytes)
+    * divided by the number of channels times the bytes per sample
+    */
+    unsigned int numSamples = wavHeader.subchunk2Size/ (wavHeader.numChannels * (wavHeader.bitsPerSample / 8));
 
 	vector< complex<double> > sampleBuffer;
 	
@@ -123,40 +127,54 @@ int main(int argc, char** argv)
 	short *currentSample;
 	currentSample = new short[wavHeader.numChannels];	
 
-    // Get samples for FFT
-    // Iterate through the samples until FFT_LEN hit
-   for (unsigned int i = 0; i < FFT_LEN; i++)
-    {
-		// Get the next sample (includes all the channels for this sample)
-        if (!nextSample(&currentSample[0], wavHeader.numChannels * (wavHeader.bitsPerSample/8), wavIn))
-        {
-            return 1;
-        }
+	// FFT Variables (to be replaced with buffers later)
+	double maxSpec;
+	double temp;
+	int maxIndex;
 
-		// Save the first channel, multiplying it by the current value for the window
-		//cout << window[i] << endl;
-		double chan0Sample = currentSample[0] * window[i];
-		sampleBuffer.push_back(chan0Sample);		
+    // Get samples for FFT
+    // Iterate through the samples until the entire thing has been sampled (padded to be divisible by the FFT_LEN)
+   for (unsigned int i = 0; i < numSamples; i += FFT_LEN/2)
+    {
+		sampleBuffer.clear();
+		for (unsigned int k = 0; k < FFT_LEN; k++)
+		{	
+			// Get the next sample (includes all the channels for this sample)
+		    if (!nextSample(&currentSample[0], wavHeader.numChannels * (wavHeader.bitsPerSample/8), wavIn))
+		    {
+				// If the last sample has been hit, will have to pad with zeros to get a power of 2 - this will dramatically add to spectral leakage,
+				// but only for last sample and allows a simple alogrithm can be used
+		        for (unsigned short j = 0; j < wavHeader.numChannels; j++)
+				{
+					currentSample[j] = 0;
+				}
+		    }
+
+			// Save the first channel, multiplying it by the current value for the window
+			double chan0Sample = currentSample[0] * window[k];
+			sampleBuffer.push_back(chan0Sample);	
+		}	
+
+		// Perform FFT for each time window
+		fft(1, sampleBuffer);
+
+		// Analyse it
+		maxSpec = (sampleBuffer.at(0).real())*(sampleBuffer.at(0).real()) + (sampleBuffer.at(0).imag())*(sampleBuffer.at(0).imag());
+		temp = 0;
+		maxIndex = 0;
+
+		for (int i = 1; i < FFT_LEN; i++) 
+		{
+			temp = (sampleBuffer.at(i).real())*(sampleBuffer.at(i).real()) + (sampleBuffer.at(i).imag())*(sampleBuffer.at(i).imag());
+
+			if (temp > maxSpec) 
+			{
+				maxSpec = temp;
+				maxIndex = i;
+			}
+		}
     }
 
-	// Perform FFT
-	fft(1, sampleBuffer);
-
-	// Analyse it
-	double maxSpec = (sampleBuffer.at(0).real())*(sampleBuffer.at(0).real()) + (sampleBuffer.at(0).imag())*(sampleBuffer.at(0).imag());
-	double temp = 0;
-	int maxIndex = 0;
-
-	for (int i = 1; i < FFT_LEN; i++) 
-	{
-		temp = (sampleBuffer.at(i).real())*(sampleBuffer.at(i).real()) + (sampleBuffer.at(i).imag())*(sampleBuffer.at(i).imag());
-
-		if (temp > maxSpec) 
-		{
-			maxSpec = temp;
-			maxIndex = i;
-		}
-	}
    
     // Now that actual processing is complete but before writing the summary file, stop timer
     t = clock() - t;
