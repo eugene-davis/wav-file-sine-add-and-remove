@@ -148,7 +148,7 @@ int main(int argc, char** argv)
 		{
 			sampleBuffer[chan].clear();
 		}
-
+		// Iterate through the size of the window, getting samples or if out, setting them to zero
 		for (unsigned int sampNum = 0; sampNum < FFT_LEN; sampNum++)
 		{	
 			// Get the next sample (includes all the channels for this sample)
@@ -163,7 +163,7 @@ int main(int argc, char** argv)
 						currentSample[chan] = 0;
 					}
 				}
-				// Else an error
+				// Otherwise an error
 				else
 				{
 					return 1;
@@ -189,7 +189,7 @@ int main(int argc, char** argv)
 			double temp;
 			int maxIndex;
 
-			// Analyse it
+			// Analyse result of FFT
 			maxSpec = (sampleBuffer[chan].at(0).real())*(sampleBuffer[chan].at(0).real()) + (sampleBuffer[chan].at(0).imag())*(sampleBuffer[chan].at(0).imag());
 			temp = 0;
 			maxIndex = 0;
@@ -197,13 +197,14 @@ int main(int argc, char** argv)
 			for (int i = 1; i < FFT_LEN; i++) 
 			{
 				temp = (sampleBuffer[chan].at(i).real())*(sampleBuffer[chan].at(i).real()) + (sampleBuffer[chan].at(i).imag())*(sampleBuffer[chan].at(i).imag());
-
+				// Check if there is a new maximum value
 				if (temp > maxSpec) 
 				{
 					maxSpec = temp;
 					maxIndex = i;
 				}
 			}
+			// Add to the buffer
 			maxIndices[chan].push_back(maxIndex);
 		}
     }
@@ -216,7 +217,6 @@ int main(int argc, char** argv)
 		// Calculate average
 		for ( ; i < maxIndices[chan].size(); i++)
 		{
-			//cout << maxIndices.at(i) << endl;
 			avgMax += maxIndices[chan].at(i);
 		}
 		avgMax = avgMax / i;
@@ -234,6 +234,7 @@ int main(int argc, char** argv)
     // Now that actual processing is complete but before writing the summary file, stop timer
     t = clock() - t;
 
+	// Output remaining information
     summaryFile << "Sampling Frequency (samp/s): " << wavHeader.sampleRate << endl;
     summaryFile << "Recording Length (s): " 
             /*(Dimensional Analysis): (bytes / (bytes/samp)) / samp/s = samp * s/samp = s*/
