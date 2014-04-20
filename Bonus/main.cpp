@@ -38,7 +38,6 @@
 #include "bonus_fourier.h"
 
 // Pick a power of 2 for the FFT length (since the FFT has a power of 2 limitation)
-//#define FFT_LEN 32768 // 2^15
 #define FFT_LEN 4096 // 2^12
 //#define FFT_LEN 8192 // 2^13
 
@@ -209,26 +208,23 @@ int main(int argc, char** argv)
 	for (int chan = 0; chan < wavHeader.numChannels; chan++)
 	{
 		cout << "channel number " << chan << endl;
-		// Reset relevant maxIndices channel
-		maxIndices[chan].clear();
 		
 		int i = 0;
-		int avgMax = 0;
+		double avgMax = 0;
 		// Calculate average
-		/*for ( ; i < maxIndices[chan].size(); i++)
+		for ( ; i < maxIndices[chan].size(); i++)
 		{
 			//cout << maxIndices.at(i) << endl;
-			cout << "test " << i << endl; 
 			avgMax += maxIndices[chan].at(i);
 		}
-		avgMax = avgMax / i;*/
+		avgMax = avgMax / i;
 
 		// Calculate median - quick way (https://stackoverflow.com/questions/12243902/median-selection-algorithm)
 		size_t middle = maxIndices[chan].size()/2;
 		nth_element(maxIndices[chan].begin(), maxIndices[chan].begin() + middle, maxIndices[chan].end());
 		cout << maxIndices[chan][middle] * wavHeader.sampleRate / FFT_LEN << endl;
 
-		//cout << avgMax * wavHeader.sampleRate / FFT_LEN << endl;
+		cout << avgMax * wavHeader.sampleRate / FFT_LEN << endl;
 	}
 
    
