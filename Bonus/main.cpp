@@ -48,12 +48,7 @@ using namespace std;
  * to add a sine wave signal to the WAV file's audio.
  */
 int main(int argc, char** argv)
-{
-
-    // Windows (non-POSIX) friendly timing from http://www.cplusplus.com/reference/ctime/clock/
-	clock_t t;
-	t = clock();
-    
+{  
     // Create new struct for header
     header wavHeader;
 
@@ -99,6 +94,15 @@ int main(int argc, char** argv)
         return 1;
     }
 
+    // Write to summary text file (opening parts)
+	ofstream summaryFile;
+	summaryFile.open("Summary.txt");
+	
+	summaryFile << "Input File Name: " << argv[1] << endl;
+
+	// Windows (non-POSIX) friendly timing from http://www.cplusplus.com/reference/ctime/clock/
+	clock_t t;
+	t = clock();
 
 
 	// Generate an array of proper size (FFT_LEN) to apply a Welch window
@@ -207,8 +211,6 @@ int main(int argc, char** argv)
 	// Processing to discover dominant frequency for each channel
 	for (int chan = 0; chan < wavHeader.numChannels; chan++)
 	{
-		cout << "channel number " << chan << endl;
-		
 		int i = 0;
 		double avgMax = 0;
 		// Calculate average
@@ -222,22 +224,16 @@ int main(int argc, char** argv)
 		// Calculate median - quick way (https://stackoverflow.com/questions/12243902/median-selection-algorithm)
 		size_t middle = maxIndices[chan].size()/2;
 		nth_element(maxIndices[chan].begin(), maxIndices[chan].begin() + middle, maxIndices[chan].end());
-		cout << maxIndices[chan][middle] * wavHeader.sampleRate / FFT_LEN << endl;
 
-		cout << avgMax * wavHeader.sampleRate / FFT_LEN << endl;
+		// Output each channel's info to the summary text file
+		summaryFile << "Channel " << chan << " average frequency: " << avgMax * wavHeader.sampleRate / FFT_LEN << endl;
+		summaryFile << "Channel " << chan << " median frequency: " << maxIndices[chan][middle] * wavHeader.sampleRate / FFT_LEN << endl;
 	}
 
    
     // Now that actual processing is complete but before writing the summary file, stop timer
     t = clock() - t;
 
-    
-    // Write to summary text file
-    ofstream summaryFile;
-    summaryFile.open("Summary.txt");
-    
-    summaryFile << "Input File Name: " << argv[1] << endl;
-	//summaryFile << "Frequency: " << maxIndex * wavHeader.sampleRate / FFT_LEN << " Hz" << endl;
     summaryFile << "Sampling Frequency (samp/s): " << wavHeader.sampleRate << endl;
     summaryFile << "Recording Length (s): " 
             /*(Dimensional Analysis): (bytes / (bytes/samp)) / samp/s = samp * s/samp = s*/
