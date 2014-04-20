@@ -54,8 +54,6 @@ int main(int argc, char** argv)
 
     // Input file handle to use - opened in readHeader
     FILE *wavIn;
-    // Output file handle to use - opened in writeHeader
-    FILE *wavOut;
     
     // Command as called as:
     // 381-project <inputfilename> <outputfilename> [fine/coarse] [lowpass/band]
@@ -88,7 +86,7 @@ int main(int argc, char** argv)
     /*
      *  Check sample size
      */
-	if (!wavHeader.bitsPerSample == 16)
+	if (!(wavHeader.bitsPerSample == 16))
     {
         cerr << "Invalid sample size." << endl;
         return 1;
@@ -212,7 +210,7 @@ int main(int argc, char** argv)
 	// Processing to discover dominant frequency for each channel
 	for (int chan = 0; chan < wavHeader.numChannels; chan++)
 	{
-		int i = 0;
+		unsigned int i = 0;
 		double avgMax = 0;
 		// Calculate average
 		for ( ; i < maxIndices[chan].size(); i++)
