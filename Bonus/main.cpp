@@ -123,22 +123,30 @@ int main(int argc, char** argv)
     * divided by the number of channels times the bytes per sample
     */
     unsigned int numSamples = wavHeader.subchunk2Size / (2 * wavHeader.numChannels * (wavHeader.bitsPerSample / 8));
-
-	vector< complex<double> > sampleBuffer;
 	
 	// Variable to get all channels in (to be split up)
 	short *currentSample;
 	currentSample = new short[wavHeader.numChannels];	
 
+	// Samples by channel to process
+	vector< complex<double> > *sampleBuffer;
+	sampleBuffer = new vector< complex<double> >[wavHeader.numChannels];
+
 	// FFT Buffers
-	vector<double> maxIndices;
+	vector<double> *maxIndices;
+	maxIndices = new vector<double>[wavHeader.numChannels];
+
 
     // Get samples for FFT
     // Iterate through the samples until the entire thing has been sampled (padded to be divisible by the FFT_LEN)
-   for (unsigned int i = 0; i < numSamples; i += FFT_LEN/2)
+   for (unsigned int windowNum = 0; windowNum < numSamples; windowNum += FFT_LEN/2)
     {
-		sampleBuffer.clear();
-		for (unsigned int k = 0; k < FFT_LEN; k++)
+		for (int chan = 0; chan < wavHeader.numChannels; chan++)
+		{
+			sampleBuffer[chan].clear();
+		}
+
+		for (unsigned int sampNum = 0; sampNum < FFT_LEN; sampNum++)
 		{	
 			// Get the next sample (includes all the channels for this sample)
 		    if (!nextSample(&currentSample[0], wavHeader.numChannels * (wavHeader.bitsPerSample/8), wavIn))
@@ -147,9 +155,9 @@ int main(int argc, char** argv)
 				// but only for last sample and allows a simple alogrithm can be used
 				if (feof(wavIn))
 				{
-		        	for (unsigned short j = 0; j < wavHeader.numChannels; j++)
+		        	for (unsigned short chan = 0; chan < wavHeader.numChannels; chan++)
 					{
-						currentSample[j] = 0;
+						currentSample[chan] = 0;
 					}
 				}
 				// Else an error
@@ -159,54 +167,69 @@ int main(int argc, char** argv)
 				}
 		    }
 
-			// Save the first channel, multiplying it by the current value for the window
-			double chan0Sample = currentSample[0] * window[k];
-			sampleBuffer.push_back(chan0Sample);	
-		}	
-
-		// Perform FFT for each time window
-		fft(1, sampleBuffer);
-
-		// FFT Variables
-		double maxSpec;
-		double temp;
-		int maxIndex;
-
-		// Analyse it
-		maxSpec = (sampleBuffer.at(0).real())*(sampleBuffer.at(0).real()) + (sampleBuffer.at(0).imag())*(sampleBuffer.at(0).imag());
-		temp = 0;
-		maxIndex = 0;
-
-		for (int i = 1; i < FFT_LEN; i++) 
-		{
-			temp = (sampleBuffer.at(i).real())*(sampleBuffer.at(i).real()) + (sampleBuffer.at(i).imag())*(sampleBuffer.at(i).imag());
-
-			if (temp > maxSpec) 
+			for (int chan = 0; chan < wavHeader.numChannels; chan++)
 			{
-				maxSpec = temp;
-				maxIndex = i;
+			// Save the channel, multiplying it by the current value for the window
+				double chanSample = currentSample[chan] * window[sampNum];
+				sampleBuffer[chan].push_back(chanSample);
+			}	
+		}	
+		
+		for (int chan = 0; chan < wavHeader.numChannels; chan++)
+		{
+
+			// Perform FFT for each time window
+			fft(1, sampleBuffer[chan]);
+
+			// FFT Variables
+			double maxSpec;
+			double temp;
+			int maxIndex;
+
+			// Analyse it
+			maxSpec = (sampleBuffer[chan].at(0).real())*(sampleBuffer[chan].at(0).real()) + (sampleBuffer[chan].at(0).imag())*(sampleBuffer[chan].at(0).imag());
+			temp = 0;
+			maxIndex = 0;
+
+			for (int i = 1; i < FFT_LEN; i++) 
+			{
+				temp = (sampleBuffer[chan].at(i).real())*(sampleBuffer[chan].at(i).real()) + (sampleBuffer[chan].at(i).imag())*(sampleBuffer[chan].at(i).imag());
+
+				if (temp > maxSpec) 
+				{
+					maxSpec = temp;
+					maxIndex = i;
+				}
 			}
+			maxIndices[chan].push_back(maxIndex);
 		}
-		maxIndices.push_back(maxIndex);
     }
 
-	// Processing to discover dominant frequency
-	int i;
-	int avgMax = 0;
-	// Calculate average
-	for (i = 0; i < maxIndices.size(); i++)
+	// Processing to discover dominant frequency for each channel
+	for (int chan = 0; chan < wavHeader.numChannels; chan++)
 	{
-		//cout << maxIndices.at(i) << endl;
-		avgMax += maxIndices.at(i);
+		cout << "channel number " << chan << endl;
+		// Reset relevant maxIndices channel
+		maxIndices[chan].clear();
+		
+		int i = 0;
+		int avgMax = 0;
+		// Calculate average
+		/*for ( ; i < maxIndices[chan].size(); i++)
+		{
+			//cout << maxIndices.at(i) << endl;
+			cout << "test " << i << endl; 
+			avgMax += maxIndices[chan].at(i);
+		}
+		avgMax = avgMax / i;*/
+
+		// Calculate median - quick way (https://stackoverflow.com/questions/12243902/median-selection-algorithm)
+		size_t middle = maxIndices[chan].size()/2;
+		nth_element(maxIndices[chan].begin(), maxIndices[chan].begin() + middle, maxIndices[chan].end());
+		cout << maxIndices[chan][middle] * wavHeader.sampleRate / FFT_LEN << endl;
+
+		//cout << avgMax * wavHeader.sampleRate / FFT_LEN << endl;
 	}
-	avgMax = avgMax / i;
-
-	// Calculate median - quick way (https://stackoverflow.com/questions/12243902/median-selection-algorithm)
-	size_t middle = maxIndices.size()/2;
-	nth_element(maxIndices.begin(), maxIndices.begin() + middle, maxIndices.end());
-	cout << maxIndices[middle] * wavHeader.sampleRate / FFT_LEN << endl;
-
-	cout << avgMax * wavHeader.sampleRate / FFT_LEN << endl;
 
    
     // Now that actual processing is complete but before writing the summary file, stop timer
