@@ -226,8 +226,8 @@ int main(int argc, char** argv)
 		nth_element(maxIndices[chan].begin(), maxIndices[chan].begin() + middle, maxIndices[chan].end());
 
 		// Output each channel's info to the summary text file
-		summaryFile << "Channel " << chan << " average frequency: " << avgMax * wavHeader.sampleRate / FFT_LEN << endl;
-		summaryFile << "Channel " << chan << " median frequency: " << maxIndices[chan][middle] * wavHeader.sampleRate / FFT_LEN << endl;
+		summaryFile << "Channel " << chan << " average dominant frequency: " << avgMax * wavHeader.sampleRate / FFT_LEN << endl;
+		summaryFile << "Channel " << chan << " median dominant frequency: " << maxIndices[chan][middle] * wavHeader.sampleRate / FFT_LEN << endl;
 	}
 
    
