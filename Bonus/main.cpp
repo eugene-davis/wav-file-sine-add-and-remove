@@ -128,7 +128,6 @@ int main(int argc, char** argv)
 	// Iterate through the second half of the window, getting samples or if out, setting them to zero
 	for (unsigned int sampNum = FFT_LEN/2; sampNum < FFT_LEN; sampNum++)
 	{
-		double chanSample;
 		if (!nextSample(&currentSample[0], wavHeader.numChannels * (wavHeader.bitsPerSample/8), wavIn))
 		{
 			// If the last sample has been hit, will have to pad with zeros to get a power of 2 - this will dramatically add to spectral leakage,
