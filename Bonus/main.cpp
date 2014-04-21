@@ -41,9 +41,7 @@ int main(int argc, char** argv)
     FILE *wavIn;
     
     // Command as called as:
-    // 381-project <inputfilename> <outputfilename> [fine/coarse] [lowpass/band]
-    // it defaults to coarse lowpass filter, for other filters use both options
-	// must be specified
+    // 381-project <inputfilename>
     if (argc != 2)
     {
         cerr << "Invalid arguments. Command should be of the format"
