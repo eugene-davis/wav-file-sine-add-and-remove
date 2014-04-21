@@ -1,29 +1,14 @@
 /* 
- * This function drives the functions to read in a wave file, add a sinewave to
- * it and then write it all out to a drive.
- * 
- * Although it requires reading everything from the file twice, this program
- * simulates a real time signal by not storing samples in memory other than
- * the currently being processed sample.
- * 
- * void pointers were used for the data type of the array storing samples so as
- * to reduce the amount of conditionals required to handle the difference between
- * 8 and 16 bit samples. This allows this top level code to be more abstract and
- * maintainable/extensible for the different sample sizes.
- * 
- * function pointers were used for the 8 and 16 byte specific functions, again
- * to allow this top level code to be more abstract, and thus make it more easily
- * maintainable/extensible.
+ * This function calculates the FFT of the input WAV file (both channels) and
+ * outputs the dominant frequency (as calculated with average and median.
  * 
  * Run with:
- * 381-project <inputfilename> <outputfilename>
+ * 381-bonus <inputfilename>
  * 
  * File:   main.cpp
  * Author: Eugene Davis
  * Class: CPE 381
- * Project Phase 1
- *
- * Created on March 4, 2014, 1:44 AM
+ * Project Bonus
  */
 
 #include <iostream>
@@ -33,6 +18,7 @@
 #include <algorithm> // Used for nth_element
 #include <complex>
 #include <vector>
+#include <cmath>
 
 #include "wave_io.h"
 #include "bonus_fourier.h"
@@ -123,11 +109,15 @@ int main(int argc, char** argv)
     * The calculation for how many samples to take in is the size of the data (in bytes)
     * divided by the number of channels times the bytes per sample
     */
-    unsigned int numSamples = wavHeader.subchunk2Size / (2 * wavHeader.numChannels * (wavHeader.bitsPerSample / 8));
+    unsigned int numSamples = wavHeader.subchunk2Size / (wavHeader.numChannels * (wavHeader.bitsPerSample / 8));
 	
 	// Variable to get all channels in (to be split up)
 	short *currentSample;
 	currentSample = new short[wavHeader.numChannels];	
+
+	// Samples by channel (only real, unmultiplied by window)
+	vector<double> *sampleBufferReal;
+	sampleBufferReal = new vector<double>[wavHeader.numChannels];
 
 	// Samples by channel to process
 	vector< complex<double> > *sampleBuffer;
@@ -137,17 +127,49 @@ int main(int argc, char** argv)
 	vector<double> *maxIndices;
 	maxIndices = new vector<double>[wavHeader.numChannels];
 
+	// Priming read - Get the next sample (includes all the channels for this sample)
+	// Iterate through the second half of the window, getting samples or if out, setting them to zero
+	for (unsigned int sampNum = FFT_LEN/2; sampNum < FFT_LEN; sampNum++)
+	{
+		double chanSample;
+		if (!nextSample(&currentSample[0], wavHeader.numChannels * (wavHeader.bitsPerSample/8), wavIn))
+		{
+			// If the last sample has been hit, will have to pad with zeros to get a power of 2 - this will dramatically add to spectral leakage,
+			// but only for last sample and allows a simple alogrithm can be used
+			if (feof(wavIn))
+			{
+		    	for (unsigned short chan = 0; chan < wavHeader.numChannels; chan++)
+				{
+					currentSample[chan] = 0;
+				}
+			}
+			// Otherwise an error
+			else
+			{
+				return 1;
+			}
+		}
+
+		for (int chan = 0; chan < wavHeader.numChannels; chan++)
+		{
+			// Save the channel, multiplying it by the current value for the window
+			sampleBufferReal[chan].push_back(currentSample[chan]);
+		}
+	}
+
+	cout << "Num samps " << numSamples << endl;
 
     // Get samples for FFT
     // Iterate through the samples until the entire thing has been sampled (padded to be divisible by the FFT_LEN)
-   for (unsigned int windowNum = 0; windowNum < numSamples; windowNum += FFT_LEN/2)
-    {
-		for (int chan = 0; chan < wavHeader.numChannels; chan++)
+   for (unsigned int windowNum = 0; windowNum < numSamples - FFT_LEN/2; windowNum += FFT_LEN/2)
+   {
+		for (int chan = 0; chan < wavHeader.numChannels && sampleBuffer[chan].size() == FFT_LEN; chan++)
 		{
-			sampleBuffer[chan].clear();
+			// Remove the first half of the samples
+			sampleBufferReal[chan].erase(sampleBufferReal[chan].begin(), sampleBufferReal[chan].begin() + (FFT_LEN/2));
 		}
-		// Iterate through the size of the window, getting samples or if out, setting them to zero
-		for (unsigned int sampNum = 0; sampNum < FFT_LEN; sampNum++)
+		// Iterate through the second half of the window, getting samples or if out, setting them to zero
+		for (unsigned int sampNum = FFT_LEN/2; sampNum < FFT_LEN; sampNum++)
 		{	
 			// Get the next sample (includes all the channels for this sample)
 		    if (!nextSample(&currentSample[0], wavHeader.numChannels * (wavHeader.bitsPerSample/8), wavIn))
@@ -170,15 +192,21 @@ int main(int argc, char** argv)
 
 			for (int chan = 0; chan < wavHeader.numChannels; chan++)
 			{
-			// Save the channel, multiplying it by the current value for the window
-				double chanSample = currentSample[chan] * window[sampNum];
-				sampleBuffer[chan].push_back(chanSample);
-			}	
+				// Save the channel, multiplying it by the current value for the window
+				sampleBufferReal[chan].push_back(currentSample[chan]);
+			}
 		}	
 		
 		for (int chan = 0; chan < wavHeader.numChannels; chan++)
 		{
-
+			// Clear the sampleBuffer
+			sampleBuffer[chan].clear();
+			// Copy in the entire sampleBufferReal into sampleBuffer, multiplying each item by the window
+			for (int sampleNum = 0; sampleNum < FFT_LEN; sampleNum++)
+			{
+				sampleBuffer[chan].push_back( sampleBufferReal[chan].at(sampleNum) * window[sampleNum]);
+			}
+		
 			// Perform FFT for each time window
 			fft(1, sampleBuffer[chan]);
 
@@ -186,7 +214,7 @@ int main(int argc, char** argv)
 			double maxSpec;
 			double temp;
 			int maxIndex;
-
+			
 			// Analyse result of FFT
 			maxSpec = (sampleBuffer[chan].at(0).real())*(sampleBuffer[chan].at(0).real()) + (sampleBuffer[chan].at(0).imag())*(sampleBuffer[chan].at(0).imag());
 			temp = 0;
@@ -215,6 +243,7 @@ int main(int argc, char** argv)
 		// Calculate average
 		for ( ; i < maxIndices[chan].size(); i++)
 		{
+			//cout << maxIndices[chan].at(i) << endl;
 			avgMax += maxIndices[chan].at(i);
 		}
 		avgMax = avgMax / i;
