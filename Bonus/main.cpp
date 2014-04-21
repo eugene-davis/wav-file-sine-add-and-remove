@@ -154,7 +154,6 @@ int main(int argc, char** argv)
 		}
 	}
 
-	cout << "Num samps " << numSamples << endl;
 
     // Get samples for FFT
     // Iterate through the samples until the entire thing has been sampled (padded to be divisible by the FFT_LEN)
@@ -240,7 +239,6 @@ int main(int argc, char** argv)
 		// Calculate average
 		for ( ; i < maxIndices[chan].size(); i++)
 		{
-			//cout << maxIndices[chan].at(i) << endl;
 			avgMax += maxIndices[chan].at(i);
 		}
 		avgMax = avgMax / i;
