@@ -1,8 +1,8 @@
 Input File Name: Davis_E_noise.WAV
-Channel 0 average dominant frequency: 8031.48
+Channel 0 average dominant frequency: 8409.68
 Channel 0 median dominant frequency: 2497.85
-Channel 1 average dominant frequency: 8953.75
+Channel 1 average dominant frequency: 9148.66
 Channel 1 median dominant frequency: 2497.85
 Sampling Frequency (samp/s): 44100
 Recording Length (s): 59
-Processing Time (s): 4.0999999
+Processing Time (s): 8.3299999

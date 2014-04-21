@@ -1,8 +1,8 @@
 Input File Name: Davis_E_lp.WAV
-Channel 0 average dominant frequency: 18330.6
+Channel 0 average dominant frequency: 18355
 Channel 0 median dominant frequency: 193.799
-Channel 1 average dominant frequency: 18594.4
-Channel 1 median dominant frequency: 193.799
+Channel 1 average dominant frequency: 18477.6
+Channel 1 median dominant frequency: 172.266
 Sampling Frequency (samp/s): 44100
 Recording Length (s): 59
-Processing Time (s): 4.1500001
+Processing Time (s): 8.4799995
