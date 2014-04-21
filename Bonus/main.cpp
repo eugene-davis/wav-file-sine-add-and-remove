@@ -18,7 +18,6 @@
 #include <algorithm> // Used for nth_element
 #include <complex>
 #include <vector>
-#include <cmath>
 
 #include "wave_io.h"
 #include "bonus_fourier.h"
