@@ -6,6 +6,6 @@ There are two options for the filters, a coarse grained but fast lowpass filter,
 
 Run as:
 
-381-project <input filename> <output filename> [h]
+381-project \<input filename\> \<output filename\> [h]
 
 Defaults to coarse lowpass filter, for high quality (bandpass, fine grain) filter add h at end.
