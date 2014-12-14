@@ -8,4 +8,4 @@ Different powers of two can be defined for the FFT length with the FFT_LEN prepr
 
 To run the bonus portion:
 
-381-project inputfilename
+381-project \<input_filename\>
