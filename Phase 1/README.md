@@ -1,4 +1,4 @@
-PHASE 1
+Phase 1
 =======
 
 Phase 1 adds a sine wave at 2500 HZ into a given WAV file.
